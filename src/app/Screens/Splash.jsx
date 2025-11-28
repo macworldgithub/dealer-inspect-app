@@ -1,37 +1,31 @@
-import React, { useEffect } from 'react';
-import { View, Text, Image } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { LinearGradient } from 'expo-linear-gradient'; 
-import tw from 'tailwind-react-native-classnames';
-import { theme } from '../utils/theme';
+import React, { useEffect } from "react";
+import { View, Image } from "react-native";
+import tw from "tailwind-react-native-classnames";
+import { useNavigation } from "@react-navigation/native";
+
 const Splash = () => {
   const navigation = useNavigation();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      navigation.replace('Onboarding');
+      navigation.replace("Onboarding");
     }, 4000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [navigation]);
 
   return (
-      <LinearGradient
-      colors={theme.gradients.splash} 
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={tw`flex-1 items-center justify-center`}
-    >
-      {/* Logo */}
-      <View style={tw`items-center`}>
+    <View style={tw`flex-1 bg-white items-center justify-center px-10`}>
+  
+      {/* Bottom Logo */}
+      <View style={tw`absolute bottom-32 items-center`}>
         <Image
-          source={require('../../assets/Logo.png')}
-          style={[tw`mb-3`, { width: 180, height: 180 }]} // w-28 h-28
+          source={require("../../../assets/Logo.png")}
+          style={tw`w-44 h-16`}
           resizeMode="contain"
         />
-      
       </View>
-    </LinearGradient>
+    </View>
   );
 };
 
