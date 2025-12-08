@@ -1,88 +1,211 @@
+// import React from "react";
+// import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
+// import { View, Text, TouchableOpacity } from "react-native";
+
+// import { Home, Camera, User } from "lucide-react-native";
+
+// import ChooseWorkFlow from "../Screens/ChooseWorkFlow";
+// import CarDetails from "../Screens/CarDetails";
+// import Profile from "../Screens/Profile";
+
+// const Tab = createBottomTabNavigator();
+
+// export default function BottomTabNavigator() {
+//   return (
+//     <Tab.Navigator
+//       screenOptions={{
+//         headerShown: false,
+//         tabBarShowLabel: true,
+//         tabBarActiveTintColor: "#007AFF",
+//         tabBarInactiveTintColor: "#6B7280",
+//         tabBarStyle: {
+//           position: "absolute",
+//           backgroundColor: "white",
+//           borderTopWidth: 1,
+//           borderTopColor: "#e5e7eb",
+//           height: 90,
+//           paddingBottom: 36,
+//           paddingTop: 12,
+//           elevation: 20,
+//           shadowColor: "#000",
+//           shadowOpacity: 0.08,
+//           shadowOffset: { width: 0, height: -4 },
+//           shadowRadius: 12,
+//         },
+//       }}
+//     >
+//       {/* HOME */}
+//       <Tab.Screen
+//         name="Home"
+//         component={ChooseWorkFlow}
+//         options={{
+//           tabBarLabel: "Home",
+//           tabBarIcon: ({ focused }) => (
+//             <Home
+//               size={26}
+//               strokeWidth={2.3}
+//               color={focused ? "#007AFF" : "#6B7280"}
+//             />
+//           ),
+//           tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+//         }}
+//       />
+
+//       <Tab.Screen
+//         name="CarDetails"
+//         component={CarDetails}
+//         options={{
+//           tabBarLabel: "Inspect",
+//           tabBarIcon: () => (
+//             <View className="-top-6">
+//               <View className="bg-blue-500 w-16 h-16 rounded-full items-center justify-center shadow-2xl border-4 border-white">
+//                 <Camera size={32} color="white" strokeWidth={2.5} />
+//               </View>
+//             </View>
+//           ),
+//           tabBarLabelStyle: {
+//             color: "#007AFF",
+//             fontWeight: "bold",
+//             fontSize: 12,
+//           },
+//           // Custom button to fix ripple & press area
+//           tabBarButton: (props) => (
+//             <TouchableOpacity
+//               {...props}
+//               className="flex-1 justify-center items-center"
+//               activeOpacity={0.7}
+//             />
+//           ),
+//         }}
+//       />
+
+//       <Tab.Screen
+//         name="Profile"
+//         component={Profile}
+//         options={{
+//           tabBarLabel: "Profile",
+//           tabBarIcon: ({ focused }) => (
+//             <User
+//               size={32}
+//               strokeWidth={2.3}
+//               color={focused ? "#007AFF" : "#6B7280"}
+//             />
+//           ),
+//           tabBarLabelStyle: { fontSize: 12, fontWeight: "600" },
+//         }}
+//       />
+//     </Tab.Navigator>
+//   );
+// }
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { View, Text, Pressable } from "react-native";
+import { Pressable, Text, View } from "react-native";
 import tw from "tailwind-react-native-classnames";
 
-import Home from "../Screens/Home";
+import ChooseWorkFlow from "../Screens/ChooseWorkFlow";
+import CarDetails from "../Screens/CarDetails";
 import Profile from "../Screens/Profile";
-import InspectionList from "../Screens/InspectionList";
-
-// ✅ CHANGED: Using AppIcon instead of Ionicons
 import AppIcon from "../components/AppIcon";
 
 const Tab = createBottomTabNavigator();
 
-// ✅ UPDATED: TabBarIcon now uses AppIcon instead of Ionicons
-const TabBarIcon = ({ focused, color, size, iconName }) => (
-  <View style={tw`items-center justify-center`}>
-    <AppIcon name={iconName} size={size} color="#FFC302" />
-  </View>
-);
-
-const TabBarLabel = ({ color, children }) => (
-  <Text style={[tw`text-xs font-medium -mb-2`, { color }]}>{children}</Text>
-);
-
-const CustomTabBarButton = ({ children, onPress }) => (
-  <Pressable
-    onPress={onPress}
-    style={tw`flex-1 items-center justify-center`}
-    android_ripple={{ color: "transparent" }}
-  >
-    {children}
-  </Pressable>
-);
-
 const BottomTabNavigator = () => {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarButton: (props) => <CustomTabBarButton {...props} />,
-        tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
-
-          // ✅ These names will work across both Android & iOS
-          if (route.name === "Home") iconName = "home";
-          else if (route.name === "Inspect") iconName = "camera";
-          else if (route.name === "Profile") iconName = "user";
-
-          return (
-            <TabBarIcon
-              focused={focused}
-              color={color}
-              size={size}
-              iconName={iconName}
-            />
-          );
-        },
-        tabBarLabel: ({ color, children }) => (
-          <TabBarLabel color={color}>{children}</TabBarLabel>
-        ),
-        tabBarStyle: [
-          tw`bg-white border-t border-gray-200 pb-2`,
-          {
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 3,
-            elevation: 10,
-          },
-        ],
-        tabBarActiveTintColor: "#2f855a",
-        tabBarInactiveTintColor: "#8E8E93",
+      screenOptions={{
         headerShown: false,
-      })}
+        tabBarStyle: {
+          backgroundColor: "white",
+          borderTopWidth: 1,
+          borderTopColor: "#e5e7eb",
+          paddingBottom: 4,
+          height: 95,
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: -3 },
+          shadowOpacity: 0.1,
+          shadowRadius: 5,
+          elevation: 10,
+        },
+        tabBarItemStyle: {
+          padding: 2,
+        },
+        tabBarActiveTintColor: "#2563eb", // Blue color jab active ho
+        tabBarInactiveTintColor: "#6b7280", // Gray when inactive
+      }}
     >
-      <Tab.Screen name="Home" component={Home} options={{ title: "Home" }} />
       <Tab.Screen
-        name="Inspect"
-        component={InspectionList}
-        options={{ title: "Inspect" }}
+        name="ChooseWorkFlow"
+        component={ChooseWorkFlow}
+        options={{
+          tabBarLabel: ({ focused }) => (
+            <Text
+              style={{
+                color: focused ? "#2563eb" : "black",
+                fontSize: 12,
+                fontWeight: focused ? "600" : "500",
+              }}
+            >
+              Home
+            </Text>
+          ),
+          tabBarIcon: ({ focused }) => (
+            <AppIcon
+              name="home"
+              size={24}
+              color={focused ? "#2563eb" : "black"}
+            />
+          ),
+        }}
       />
+
+      <Tab.Screen
+        name="CarDetails"
+        component={CarDetails}
+        options={{
+          tabBarLabel: ({ focused }) => (
+            <Text
+              style={{
+                color: focused ? "#2563eb" : "black",
+                fontSize: 12,
+                fontWeight: focused ? "600" : "500",
+              }}
+            >
+              Inspect
+            </Text>
+          ),
+          tabBarIcon: ({ focused }) => (
+            <AppIcon
+              name="camera"
+              size={24}
+              color={focused ? "#2563eb" : "black"}
+            />
+          ),
+        }}
+      />
+
       <Tab.Screen
         name="Profile"
         component={Profile}
-        options={{ title: "Profile" }}
+        options={{
+          tabBarLabel: ({ focused }) => (
+            <Text
+              style={{
+                color: focused ? "#2563eb" : "black",
+                fontSize: 12,
+                fontWeight: focused ? "600" : "500",
+              }}
+            >
+              Profile
+            </Text>
+          ),
+          tabBarIcon: ({ focused }) => (
+            <AppIcon
+              name="user"
+              size={24}
+              color={focused ? "#2563eb" : "black"}
+            />
+          ),
+        }}
       />
     </Tab.Navigator>
   );

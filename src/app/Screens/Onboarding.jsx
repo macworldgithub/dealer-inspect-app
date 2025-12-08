@@ -41,7 +41,7 @@ export default function WelcomeScreen() {
         {/* Button */}
         <View style={tw`px-8 mb-12`}>
           <TouchableOpacity
-            onPress={() => navigation.replace("ChooseWorkFlow")}
+            onPress={() => navigation.replace("HomeTabs")}
             style={tw`bg-black py-3 rounded-full items-center`}
           >
             <Text style={tw`text-white text-lg font-semibold`}>

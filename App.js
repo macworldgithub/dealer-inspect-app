@@ -10,6 +10,10 @@ import Onboarding from "./src/app/Screens/Onboarding";
 import ChooseWorkFlow from "./src/app/Screens/ChooseWorkFlow";
 import ServiceIntake from "./src/app/Screens/ServiceIntake";
 import Merchandising from "./src/app/Screens/Merchandising";
+import BottomTabNavigator from "./src/app/navigation/createBottomTabNavigator";
+import Profile from "./src/app/Screens/Profile";
+import CarDetails from "./src/app/Screens/CarDetails";
+import ServiceProtectionScreen1 from "./src/app/Screens/ServiceProtectionScreen1";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -29,6 +33,17 @@ export default function App() {
         <Stack.Screen name="ChooseWorkFlow" component={ChooseWorkFlow} />
         <Stack.Screen name="ServiceIntake" component={ServiceIntake} />
         <Stack.Screen name="Merchandising" component={Merchandising} />
+        <Stack.Screen
+          name="BottomTabNavigator"
+          component={BottomTabNavigator}
+        />
+        <Stack.Screen name="Profile" component={Profile} />
+        <Stack.Screen name="CarDetails" component={CarDetails} />
+        <Stack.Screen name="HomeTabs" component={BottomTabNavigator} />
+        <Stack.Screen
+          name="ServiceProtectionScreen1"
+          component={ServiceProtectionScreen1}
+        />
       </Stack.Navigator>
     </NavigationContainer>
   );
