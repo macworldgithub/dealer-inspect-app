@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { View, Text, TouchableOpacity, ScrollView, Image } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { Truck, Camera } from "lucide-react-native";
@@ -28,13 +29,33 @@ const features = [
 ];
 
 export default function ChooseWorkFlow({ navigation }) {
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const userData = await AsyncStorage.getItem("user");
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUserName(user.name);
+        }
+      } catch (error) {
+        console.error("Failed to load user", error);
+      }
+    };
+
+    loadUser();
+  }, []);
+
   return (
     <View style={tw`flex-1 bg-black`}>
       {/* Header */}
       <View style={tw`flex-row justify-between items-center px-6 pt-16 pb-6`}>
-        <Text style={tw`text-3xl font-bold text-white`}>Hi, Martin!</Text>
+        <Text style={tw`text-3xl font-bold text-white`}>
+          Hi{userName ? `, ${userName}` : ""}!
+        </Text>
 
-        <View style={tw`flex-row items-center`}>
+        {/* <View style={tw`flex-row items-center`}>
           <Image
             source={require("../../../assets/bell.png")}
             style={[tw`w-6 h-6 mr-4`, { tintColor: "white" }]}
@@ -43,7 +64,7 @@ export default function ChooseWorkFlow({ navigation }) {
             source={require("../../../assets/avatar.png")}
             style={tw`w-11 h-11 rounded-full border-2 border-gray-700`}
           />
-        </View>
+        </View> */}
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={tw`flex-1`}>

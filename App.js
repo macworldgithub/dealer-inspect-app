@@ -14,6 +14,8 @@ import BottomTabNavigator from "./src/app/navigation/createBottomTabNavigator";
 import Profile from "./src/app/Screens/Profile";
 import CarDetails from "./src/app/Screens/CarDetails";
 import ServiceProtectionScreen1 from "./src/app/Screens/ServiceProtectionScreen1";
+import SignIn from "./src/app/Screens/Signin";
+import SignUp from "./src/app/Screens/Signup";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -28,7 +30,8 @@ export default function App() {
         }}
       >
         <Stack.Screen name="Splash" component={Splash} />
-        {/* <Stack.Screen name="SignUp" component={SignUp} /> */}
+        <Stack.Screen name="SignIn" component={SignIn} />
+        <Stack.Screen name="SignUp" component={SignUp} />
         <Stack.Screen name="Onboarding" component={Onboarding} />
         <Stack.Screen name="ChooseWorkFlow" component={ChooseWorkFlow} />
         <Stack.Screen name="ServiceIntake" component={ServiceIntake} />
