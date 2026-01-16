@@ -14,7 +14,7 @@ import tw from "tailwind-react-native-classnames";
 import { Plus, X, Scan } from "lucide-react-native";
 import { API_BASE_URL } from "../util/config";
 
-const MAX_IMAGES = 25;
+const MAX_IMAGES = 20;
 
 export default function InspectionScreen({ route }) {
   const { vehicleId, image } = route.params;
@@ -186,7 +186,7 @@ export default function InspectionScreen({ route }) {
         },
         body: JSON.stringify(payload),
       });
-      console.log("Inspection", res)
+      console.log("Inspection", res);
 
       if (!res.ok) {
         const err = await res.json();
@@ -202,66 +202,194 @@ export default function InspectionScreen({ route }) {
   };
 
   return (
+    // <ScrollView style={tw`flex-1 bg-black`}>
+    //   <View style={tw`px-6 pt-12 pb-6`}>
+    //     <Text style={tw`text-white text-2xl font-bold`}>Inspection Images</Text>
+    //     <Text style={tw`text-gray-400 mt-1`}>
+    //       Upload, Analyze and Review damages
+    //     </Text>
+    //   </View>
+
+    //   <View style={tw`mx-5 bg-white rounded-3xl p-5 shadow-2xl`}>
+    //     <View style={tw`flex-row flex-wrap gap-4`}>
+    //       {images.map((img, index) => (
+    //         <View key={index} style={tw`relative w-28`}>
+    //           <Image
+    //             source={{ uri: img.analysedUrl || img.signedUrl }}
+    //             style={tw`w-28 h-28 rounded-xl`}
+    //           />
+
+    //           <TouchableOpacity
+    //             onPress={() => removeImage(index)}
+    //             style={tw`absolute -top-2 -right-2 bg-black rounded-full p-1`}
+    //           >
+    //             <X size={14} color="white" />
+    //           </TouchableOpacity>
+
+    //           <TouchableOpacity
+    //             onPress={() => analyzeImage(index)}
+    //             disabled={img.analysing}
+    //             style={tw`mt-2 bg-black rounded-full py-1 flex-row justify-center items-center`}
+    //           >
+    //             {img.analysing ? (
+    //               <ActivityIndicator color="#fff" size="small" />
+    //             ) : (
+    //               <>
+    //                 <Scan size={14} color="white" />
+    //                 <Text style={tw`text-white text-xs ml-1`}>Analyze</Text>
+    //               </>
+    //             )}
+    //           </TouchableOpacity>
+    //           <TouchableOpacity
+    //             onPress={createInspection}
+    //             disabled={!images.some((img) => img.analysedKey)}
+    //             style={tw`mt-6 bg-black py-3 rounded-xl`}
+    //           >
+    //             <Text style={tw`text-white text-center font-semibold`}>
+    //               Save Inspection
+    //             </Text>
+    //           </TouchableOpacity>
+    //         </View>
+    //       ))}
+
+    //       {images.length < MAX_IMAGES && (
+    //         <TouchableOpacity
+    //           onPress={pickImage}
+    //           style={tw`w-28 h-28 rounded-xl border-2 border-dashed border-gray-400 justify-center items-center`}
+    //         >
+    //           <Plus size={32} color="#9CA3AF" />
+    //         </TouchableOpacity>
+    //       )}
+    //     </View>
+    //   </View>
+
+    //   <View style={tw`h-24`} />
+    // </ScrollView>
     <ScrollView style={tw`flex-1 bg-black`}>
-      <View style={tw`px-6 pt-12 pb-6`}>
+      {/* Heading */}
+      <View style={tw`px-6 pt-12 pb-4`}>
         <Text style={tw`text-white text-2xl font-bold`}>Inspection Images</Text>
         <Text style={tw`text-gray-400 mt-1`}>
-          Upload, Analyze and Review damages
+          Upload, analyze and review damages
         </Text>
       </View>
 
-      <View style={tw`mx-5 bg-white rounded-3xl p-5 shadow-2xl`}>
-        <View style={tw`flex-row flex-wrap gap-4`}>
-          {images.map((img, index) => (
-            <View key={index} style={tw`relative w-28`}>
-              <Image
-                source={{ uri: img.analysedUrl || img.signedUrl }}
-                style={tw`w-28 h-28 rounded-xl`}
-              />
+      {/* Image Upload Button */}
+      {images.length < MAX_IMAGES && (
+        <TouchableOpacity
+          onPress={pickImage}
+          style={tw`mx-6 my-4 h-28 rounded-xl border-2 border-dashed border-gray-400 justify-center items-center`}
+        >
+          <Plus size={32} color="#9CA3AF" />
+          <Text style={tw`text-gray-400 mt-1`}>Upload Image</Text>
+        </TouchableOpacity>
+      )}
 
+      {/* Uploaded Images */}
+      {images.map((img, index) => (
+        <View
+          key={index}
+          style={tw`mx-6 my-4 bg-white rounded-2xl p-4 shadow-md`}
+        >
+          {/* Images Row */}
+          <View style={tw`flex-row`}>
+            {/* Original Image */}
+            <View style={tw`flex-1 mr-2 items-center`}>
+              <Image
+                source={{ uri: img.localUri }}
+                style={tw`w-full h-40 rounded-xl`}
+                resizeMode="cover"
+              />
               <TouchableOpacity
                 onPress={() => removeImage(index)}
-                style={tw`absolute -top-2 -right-2 bg-black rounded-full p-1`}
+                style={tw`mt-2 bg-red-500 py-1 px-3 rounded-full`}
               >
-                <X size={14} color="white" />
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                onPress={() => analyzeImage(index)}
-                disabled={img.analysing}
-                style={tw`mt-2 bg-black rounded-full py-1 flex-row justify-center items-center`}
-              >
-                {img.analysing ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <>
-                    <Scan size={14} color="white" />
-                    <Text style={tw`text-white text-xs ml-1`}>Analyze</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-              <TouchableOpacity
-                onPress={createInspection}
-                disabled={!images.some((img) => img.analysedKey)}
-                style={tw`mt-6 bg-black py-3 rounded-xl`}
-              >
-                <Text style={tw`text-white text-center font-semibold`}>
-                  Save Inspection
-                </Text>
+                <Text style={tw`text-white font-semibold text-sm`}>Delete</Text>
               </TouchableOpacity>
             </View>
-          ))}
 
-          {images.length < MAX_IMAGES && (
-            <TouchableOpacity
-              onPress={pickImage}
-              style={tw`w-28 h-28 rounded-xl border-2 border-dashed border-gray-400 justify-center items-center`}
-            >
-              <Plus size={32} color="#9CA3AF" />
-            </TouchableOpacity>
+            {/* Analyzed Image */}
+            <View style={tw`flex-1 ml-2 items-center`}>
+              {img.analysedUrl ? (
+                <Image
+                  source={{ uri: img.analysedUrl }}
+                  style={tw`w-full h-40 rounded-xl`}
+                  resizeMode="cover"
+                />
+              ) : (
+                <TouchableOpacity
+                  onPress={() => analyzeImage(index)}
+                  disabled={img.analysing}
+                  style={tw`mt-16 bg-black rounded-full py-2 px-4 flex-row items-center`}
+                >
+                  {img.analysing ? (
+                    <ActivityIndicator color="#fff" size="small" />
+                  ) : (
+                    <>
+                      <Scan size={16} color="white" />
+                      <Text style={tw`text-white text-sm ml-2`}>Analyze</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
+            </View>
+          </View>
+
+          {img.analysedUrl && img.damages?.length > 0 && (
+            <View style={tw`mt-4 bg-gray-100 rounded-xl p-3`}>
+              <Text style={tw`text-gray-800 font-bold text-sm mb-2`}>
+                Detected Damages
+              </Text>
+
+              {img.damages.map((dmg, i) => (
+                <View
+                  key={i}
+                  style={tw`mb-2 bg-white rounded-lg p-2 border border-gray-200`}
+                >
+                  <Text style={tw`text-black font-semibold text-sm`}>
+                    {dmg.type || "Unknown Damage"}
+                  </Text>
+
+                  {dmg.description && (
+                    <Text style={tw`text-gray-600 text-xs mt-1`}>
+                      {dmg.description}
+                    </Text>
+                  )}
+
+                  <View style={tw`flex-row justify-between mt-1`}>
+                    <Text style={tw`text-xs text-gray-500`}>
+                      Severity: {dmg.severity ?? "N/A"}
+                    </Text>
+                    <Text style={tw`text-xs text-gray-500`}>
+                      Confidence: {dmg.confidence ?? "N/A"}
+                    </Text>
+                  </View>
+
+                  {dmg.repair_cost_estimate && (
+                    <Text style={tw`text-xs text-red-600 mt-1`}>
+                      Est. Cost: {dmg.repair_cost_estimate.currency}{" "}
+                      {dmg.repair_cost_estimate.min} -{" "}
+                      {dmg.repair_cost_estimate.max}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
           )}
         </View>
-      </View>
+      ))}
+
+      {/* Create Inspection Button */}
+      {images.some((img) => img.analysedKey) && (
+        <TouchableOpacity
+          onPress={createInspection}
+          style={tw`mx-6 my-6 bg-black py-4 rounded-xl`}
+        >
+          <Text style={tw`text-white text-center font-semibold text-lg`}>
+            Create Inspection
+          </Text>
+        </TouchableOpacity>
+      )}
 
       <View style={tw`h-24`} />
     </ScrollView>
