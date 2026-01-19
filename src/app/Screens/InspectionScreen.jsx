@@ -332,6 +332,7 @@
 //     </ScrollView>
 //   );
 // }
+
 import React, { useState } from "react";
 import {
   View,
@@ -348,8 +349,38 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import tw from "tailwind-react-native-classnames";
 import { Plus, Scan } from "lucide-react-native";
 import { API_BASE_URL } from "../util/config";
+import { Trash } from "lucide-react-native";
 
-const TOTAL_STEPS = 20;
+// const TOTAL_STEPS = 20;
+
+const INSPECTION_STEPS = [
+  "Exterior Front",
+  "Exterior Rear",
+  "Exterior Left",
+  "Exterior Right",
+  "Exterior Roof",
+
+  "Interior Front",
+  "Interior Rear",
+  "Interior Dashboard",
+  "Interior Seats",
+  "Interior Floor",
+
+  "Engine Bay",
+  "Engine Fluids",
+  "Battery Condition",
+
+  "Brakes Front",
+  "Brakes Rear",
+
+  "Suspension Front",
+  "Suspension Rear",
+
+  "Tyres Front",
+  "Tyres Rear",
+  "Spare Tyre",
+];
+const TOTAL_STEPS = INSPECTION_STEPS.length;
 
 export default function InspectionScreen({ route, navigation }) {
   const { vehicleId } = route.params;
@@ -474,86 +505,6 @@ export default function InspectionScreen({ route, navigation }) {
     }
   };
 
-  // const createInspection = async () => {
-  //   try {
-  //     const payload = {
-  //       vehicleId,
-  //       status: "DRAFT",
-  //       images: images
-  //         .filter(Boolean)
-  //         .filter((img) => img.analysedKey)
-  //         .map((img) => ({
-  //           originalImageKey: img.key,
-  //           analysedImageKey: img.analysedKey,
-  //           damages: img.damages,
-  //           aiRaw: { damages: img.damages },
-  //         })),
-  //     };
-
-  //     const res = await fetch(`${API_BASE_URL}/inspection`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
-  //       },
-  //       body: JSON.stringify(payload),
-  //     });
-
-  //     if (!res.ok) throw new Error("Create failed");
-
-  //     Alert.alert("Inspection Created Successfully");
-  //   } catch {
-  //     Alert.alert("Failed to create inspection");
-  //   }
-  // };
-
-  // const createInspection = async () => {
-  //   try {
-  //     const payload = {
-  //       vehicleId,
-  //       status: "DRAFT",
-  //       images: images
-  //         .filter((img) => img && img.analysedKey)
-  //         .map((img) => ({
-  //           originalImageKey: img.key,
-  //           analysedImageKey: img.analysedKey,
-  //           aiRaw: {
-  //             damages: img.damages,
-  //           },
-  //           damages: img.damages,
-  //         })),
-  //     };
-
-  //     console.log("Inspection payload:", payload);
-  //     // ✅ SUCCESS → HOME
-  //     navigation.reset({
-  //       index: 0,
-  //       routes: [{ name: "HomeTabs" }],
-  //     });
-
-  //     const res = await fetch(`${API_BASE_URL}/inspection`, {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
-  //       },
-  //       body: JSON.stringify(payload),
-  //     });
-  //     console.log("Inspection", res);
-
-  //     if (!res.ok) {
-  //       const err = await res.json();
-  //       throw new Error(err.message || "Inspection creation failed");
-  //     }
-
-  //     const inspection = await res.json();
-  //     console.log("Inspection created:", inspection);
-  //   } catch (err) {
-  //     console.error(err);
-  //     alert("Failed to create inspection");
-  //   }
-  // };
-
   const createInspection = async () => {
     try {
       const validImages = images.filter((img) => img && img.analysedKey);
@@ -566,7 +517,9 @@ export default function InspectionScreen({ route, navigation }) {
       const payload = {
         vehicleId,
         status: "DRAFT",
-        images: validImages.map((img) => ({
+        images: validImages.map((img, index) => ({
+          stepIndex: index,
+          stepName: INSPECTION_STEPS[index],
           originalImageKey: img.key,
           analysedImageKey: img.analysedKey,
           aiRaw: {
@@ -675,15 +628,34 @@ export default function InspectionScreen({ route, navigation }) {
     return pages;
   };
 
+  const deleteImage = (stepIndex) => {
+    Alert.alert("Delete Image", "Are you sure you want to remove this image?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Delete",
+        style: "destructive",
+        onPress: () => {
+          setImages((prev) => {
+            const updated = [...prev];
+            updated[stepIndex] = null; // 🔥 REMOVE IMAGE
+            return updated;
+          });
+        },
+      },
+    ]);
+  };
+
   return (
     <ScrollView style={tw`flex-1 bg-black`}>
       {/* Header */}
       <View style={tw`px-6 pt-12 pb-4`}>
         <Text style={tw`text-white text-2xl font-bold`}>
-          Inspection Image {currentStep + 1}
+          {INSPECTION_STEPS[currentStep]}
         </Text>
+
         <Text style={tw`text-gray-400`}>
-          Step {currentStep + 1} of {TOTAL_STEPS}
+          Inspection Image {currentStep + 1} • Step {currentStep + 1} of{" "}
+          {TOTAL_STEPS}
         </Text>
       </View>
 
@@ -691,10 +663,12 @@ export default function InspectionScreen({ route, navigation }) {
       {!img && (
         <TouchableOpacity
           onPress={pickImage}
-          style={tw`mx-6 my-6 h-32 rounded-xl border-2 border-dashed border-gray-400 justify-center items-center`}
+          style={tw`mx-6 my-6 h-28 rounded-xl border-2 border-dashed border-gray-400 justify-center items-center`}
         >
-          <Plus size={32} color="#9CA3AF" />
-          <Text style={tw`text-gray-400 mt-1`}>Upload Image</Text>
+          <Plus size={28} color="#9CA3AF" />
+          <Text style={tw`text-gray-400 mt-1`}>
+            Upload {INSPECTION_STEPS[currentStep]} Image
+          </Text>
         </TouchableOpacity>
       )}
 
@@ -723,10 +697,25 @@ export default function InspectionScreen({ route, navigation }) {
             </TouchableOpacity>
           ) : (
             <>
-              <Image
+              {/* <Image
                 source={{ uri: img.analysedUrl }}
                 style={tw`w-full h-48 rounded-xl mt-4`}
-              />
+              /> */}
+
+              <View style={tw`relative`}>
+                <Image
+                  source={{ uri: img.localUri }}
+                  style={tw`w-full h-48 rounded-xl`}
+                />
+
+                {/* Trash Button */}
+                <TouchableOpacity
+                  onPress={() => deleteImage(currentStep)}
+                  style={tw`absolute top-1 right-2 bg-red-600 p-2 rounded-full`}
+                >
+                  <Trash size={18} color="white" />
+                </TouchableOpacity>
+              </View>
 
               {/* DAMAGES */}
               <View style={tw`mt-4 bg-gray-100 rounded-xl p-3`}>
