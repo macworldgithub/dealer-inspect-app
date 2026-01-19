@@ -173,7 +173,7 @@ export default function CarDetailsScreen({ navigation }) {
 
       const vehicle = await res.json();
       console.log("Vehicle created:", vehicle);
-
+      alert("Vehicle Created Successfully");
       navigation.navigate("InspectionScreen", {
         vehicleId: vehicle._id,
         image: image,

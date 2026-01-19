@@ -51,7 +51,8 @@ export default function InspectionScreen({ route, navigation }) {
   const { vehicleId } = route.params;
 
   const [currentStep, setCurrentStep] = useState(0);
-  const [images, setImages] = useState([]); 
+  const [images, setImages] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const pickImage = async () => {
     const result = await ImagePicker.launchImageLibraryAsync({
@@ -60,6 +61,7 @@ export default function InspectionScreen({ route, navigation }) {
     });
 
     if (!result.canceled) {
+      setUploading(true);
       const manipulated = await ImageManipulator.manipulateAsync(
         result.assets[0].uri,
         [{ resize: { width: 1400 } }],
@@ -98,6 +100,7 @@ export default function InspectionScreen({ route, navigation }) {
 
   const uploadOriginalImage = async (uri) => {
     try {
+      setUploading(true);
       const { url, key } = await getPresignedOriginalUrl();
       const blob = await (await fetch(uri)).blob();
 
@@ -121,6 +124,8 @@ export default function InspectionScreen({ route, navigation }) {
       });
     } catch {
       Alert.alert("Upload failed");
+    } finally {
+      setUploading(false);
     }
   };
   const analyzeImage = async () => {
@@ -212,8 +217,7 @@ export default function InspectionScreen({ route, navigation }) {
 
       const inspection = await res.json();
       console.log("Inspection created:", inspection);
-
-      // ✅ SUCCESS → HOME
+      alert("Car has been inspected successfully!");
       navigation.reset({
         index: 0,
         routes: [{ name: "HomeTabs" }],
@@ -225,6 +229,10 @@ export default function InspectionScreen({ route, navigation }) {
   };
 
   const img = images[currentStep] ?? null;
+  const analysedImagesCount = images.filter((img) => img?.analysedKey).length;
+
+  const allImagesAnalysed =
+    images.length >= 2 && analysedImagesCount === images.length;
 
   const renderPagination = () => {
     const totalPages = images.length + (images.length < 20 ? 1 : 0);
@@ -236,12 +244,12 @@ export default function InspectionScreen({ route, navigation }) {
             key={i}
             onPress={() => setCurrentStep(i)}
             style={tw`px-3 py-1 rounded-md ${
-              currentStep === i ? "bg-black" : "bg-gray-200"
+              currentStep === i ? "bg-gray-200" : "bg-black"
             }`}
           >
             <Text
               style={tw`text-sm ${
-                currentStep === i ? "text-white" : "text-black"
+                currentStep === i ? "text-black" : "text-white"
               }`}
             >
               {i + 1}
@@ -284,20 +292,27 @@ export default function InspectionScreen({ route, navigation }) {
       </View>
 
       {/* Upload */}
-      {!img && currentStep < 20 && (
-        <TouchableOpacity
-          onPress={pickImage}
-          style={tw`mx-6 my-8 bg-gray-900 rounded-2xl p-6 items-center border border-gray-700`}
-        >
-          <Plus size={30} color="#22C55E" />
-          <Text style={tw`text-white mt-3 font-semibold`}>
-            Add Inspection Image
-          </Text>
-          <Text style={tw`text-gray-400 text-sm mt-1 text-center`}>
-            {INSPECTION_STEPS[currentStep] || "Additional Inspection"}
-          </Text>
-        </TouchableOpacity>
-      )}
+      {!img &&
+        currentStep < 20 &&
+        (uploading ? (
+          <View style={tw`mx-6 my-8 bg-gray-900 rounded-2xl p-8 items-center`}>
+            <ActivityIndicator size="large" color="#22C55E" />
+            <Text style={tw`text-gray-400 mt-4`}>Uploading image…</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            onPress={pickImage}
+            style={tw`mx-6 my-8 bg-gray-900 rounded-2xl p-6 items-center border border-gray-700`}
+          >
+            <Plus size={30} color="#22C55E" />
+            <Text style={tw`text-white mt-3 font-semibold`}>
+              Add Inspection Image
+            </Text>
+            <Text style={tw`text-gray-400 text-sm mt-1 text-center`}>
+              {INSPECTION_STEPS[currentStep] || "Additional Inspection"}
+            </Text>
+          </TouchableOpacity>
+        ))}
 
       {/* Image + Analysis */}
       {img && (
@@ -376,7 +391,9 @@ export default function InspectionScreen({ route, navigation }) {
             img?.analysedKey ? "bg-green-600" : "bg-green-600"
           }`}
         >
-          <Text style={tw`text-white text-center font-semibold`}>Next</Text>
+          <Text style={tw`text-white text-center font-semibold`}>
+            Add more Image
+          </Text>
         </TouchableOpacity>
       )}
       <View style={tw`mx-6 mt-6`}>
@@ -387,20 +404,30 @@ export default function InspectionScreen({ route, navigation }) {
         </ScrollView>
       </View>
 
-      {currentStep === images.length - 1 && images.length >= 2 && (
+      {currentStep === images.length - 1 && (
         <TouchableOpacity
           onPress={createInspection}
-          style={tw`mx-6 my-8 bg-green-600 py-4 rounded-xl shadow-lg`}
+          disabled={!allImagesAnalysed}
+          style={tw`
+      mx-6 my-8 py-4 rounded-xl shadow-lg
+      ${allImagesAnalysed ? "bg-green-600" : "bg-gray-700"}
+    `}
         >
           <Text style={tw`text-white text-center font-bold text-lg`}>
             Create Inspection
           </Text>
-          <Text style={tw`text-green-100 text-center text-xs mt-1`}>
-            {images.length} images added
+
+          <Text
+            style={tw`text-center text-xs mt-1 ${
+              allImagesAnalysed ? "text-green-100" : "text-gray-400"
+            }`}
+          >
+            {allImagesAnalysed
+              ? `${images.length} images analyzed`
+              : `Analyze all images to continue`}
           </Text>
         </TouchableOpacity>
       )}
-
       <View style={tw`h-24`} />
     </ScrollView>
   );
