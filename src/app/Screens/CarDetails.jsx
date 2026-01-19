@@ -14,7 +14,8 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { API_BASE_URL } from "../util/config";
-
+import { ActivityIndicator } from "react-native";
+import { Trash } from "lucide-react-native";
 const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "CVT", "DCT", "AMT", "OTHER"];
 
 export default function CarDetailsScreen({ navigation }) {
@@ -22,6 +23,7 @@ export default function CarDetailsScreen({ navigation }) {
   const [transmission, setTransmission] = useState("");
   const [transmissionVisible, setTransmissionVisible] = useState(false);
   const [image, setImage] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const [form, setForm] = useState({
     make: "",
@@ -80,6 +82,7 @@ export default function CarDetailsScreen({ navigation }) {
 
   const uploadImage = async (uri) => {
     try {
+      setUploading(true);
       const fileType = "image/jpeg";
 
       const presignRes = await fetch(
@@ -126,6 +129,8 @@ export default function CarDetailsScreen({ navigation }) {
     } catch (err) {
       console.error("Full upload error:", err);
       alert("Image upload failed");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -243,7 +248,12 @@ export default function CarDetailsScreen({ navigation }) {
               onPress={() => setTransmissionVisible(true)}
             />
 
-            <SingleImageUploadField image={image} onAddImage={pickImage} />
+            <SingleImageUploadField
+              image={image}
+              onAddImage={pickImage}
+              onDeleteImage={() => setImage(null)}
+              uploading={uploading}
+            />
           </View>
 
           <TouchableOpacity
@@ -317,17 +327,36 @@ const TransmissionField = ({ value, onPress }) => (
   </View>
 );
 
-const SingleImageUploadField = ({ image, onAddImage }) => (
+const SingleImageUploadField = ({
+  image,
+  onAddImage,
+  onDeleteImage,
+  uploading,
+}) => (
   <View style={tw`mb-6`}>
     <Text style={tw`text-gray-600 text-sm font-medium mb-2 ml-1`}>
       Car Image
     </Text>
-
-    {image ? (
-      <Image
-        source={{ uri: image.localUri }}
-        style={tw`w-32 h-32 rounded-xl`}
-      />
+    {uploading ? (
+      <View
+        style={tw`w-32 h-32 rounded-xl bg-gray-100 justify-center items-center`}
+      >
+        <ActivityIndicator size="large" color="#000" />
+        <Text style={tw`text-xs text-gray-500 mt-2`}>Uploading...</Text>
+      </View>
+    ) : image ? (
+      <View style={tw`relative`}>
+        <Image
+          source={{ uri: image.localUri }}
+          style={tw`w-32 h-32 rounded-xl`}
+        />
+        <TouchableOpacity
+          onPress={onDeleteImage}
+          style={tw`absolute top-0 right-0 bg-red-600 rounded-full p-1 mr-36`}
+        >
+          <Trash size={16} color="white" />
+        </TouchableOpacity>
+      </View>
     ) : (
       <TouchableOpacity
         onPress={onAddImage}
