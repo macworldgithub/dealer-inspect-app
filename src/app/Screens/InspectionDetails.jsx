@@ -27,11 +27,12 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 export default function InspectionDetails({ route }) {
   const { vehicleId } = route.params;
   const [inspection, setInspection] = useState(null);
+  console.log(inspection);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
 
-   const getSignedGetUrl = async (key) => {
+  const getSignedGetUrl = async (key) => {
     const res = await fetch(`${API_BASE_URL}/aws/signed-url`, {
       method: "POST",
       headers: {
@@ -99,8 +100,6 @@ export default function InspectionDetails({ route }) {
   const images = inspection.images || [];
   const totalImages = images.length;
   const currentImg = images[currentImageIndex] || null;
-
- 
 
   // Upload / Replace image
   const updateImage = async (imageIndex) => {
@@ -215,7 +214,7 @@ export default function InspectionDetails({ route }) {
           body: JSON.stringify({ image_url: img.originalImageUrl }),
         },
       );
-      console.log(res, "RES")
+      console.log(res, "RES");
       if (!res.ok) throw new Error("Analysis failed");
       const data = await res.json();
 
@@ -254,6 +253,47 @@ export default function InspectionDetails({ route }) {
       updatedImages[imageIndex].analysing = false;
       setInspection({ ...inspection, images: updatedImages });
     }
+  };
+
+  const deleteInspection = async () => {
+    Alert.alert(
+      "Delete Inspection",
+      "Are you sure you want to delete the entire inspection of this vehicle? This action cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem("access_token");
+
+              const res = await fetch(
+                `${API_BASE_URL}/inspection/${inspection._id}`,
+                {
+                  method: "DELETE",
+                  headers: {
+                    Authorization: `Bearer ${token}`,
+                  },
+                },
+              );
+
+              if (!res.ok) {
+                const err = await res.text();
+                throw new Error(err || "Failed to delete inspection");
+              }
+
+              Alert.alert("Success", "Inspection deleted successfully");
+
+              route?.params?.navigation?.goBack?.();
+            } catch (err) {
+              console.error(err);
+              Alert.alert("Delete failed", err.message);
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -337,6 +377,7 @@ export default function InspectionDetails({ route }) {
                     <Text style={tw`text-white font-semibold mb-2`}>
                       Damages
                     </Text>
+
                     {currentImg.damages.map((d, i) => (
                       <View key={i} style={tw`bg-gray-700 p-3 rounded-xl mb-2`}>
                         <Text style={tw`text-red-400 font-semibold`}>
@@ -353,9 +394,32 @@ export default function InspectionDetails({ route }) {
                         </View>
                       </View>
                     ))}
+
+                    <TouchableOpacity
+                      style={tw`mt-4 bg-red-600 py-3 rounded-full items-center flex-row justify-center`}
+                      onPress={deleteInspection}
+                    >
+                      <Trash size={18} color="#fff" />
+                      <Text style={tw`text-white ml-2 font-semibold`}>
+                        Delete Inspection
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 ) : (
-                  <Text style={tw`text-gray-400`}>No damages found</Text>
+                  <View>
+                    <Text style={tw`text-gray-400 mb-4`}>No damages found</Text>
+
+                    {/* DELETE EVEN IF NO DAMAGES */}
+                    <TouchableOpacity
+                      style={tw`bg-red-600 py-3 rounded-full items-center flex-row justify-center`}
+                      onPress={deleteInspection}
+                    >
+                      <Trash size={18} color="#fff" />
+                      <Text style={tw`text-white ml-2 font-semibold`}>
+                        Delete Inspection
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </View>
             ) : (
