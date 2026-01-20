@@ -166,7 +166,7 @@ export default function VehicleDetails({ route, navigation }) {
             style={tw`bg-green-500 py-3 px-4 rounded-full items-center`}
             onPress={() =>
               navigation.navigate("InspectionDetails", {
-                inspectionId: vehicle.inspectionIds[0],
+                vehicleId: vehicle._id, 
               })
             }
           >

@@ -19,6 +19,7 @@ import SignUp from "./src/app/Screens/Signup";
 import InspectionScreen from "./src/app/Screens/InspectionScreen";
 import AllVehicles from "./src/app/Screens/AllVehicles";
 import VehicleDetails from "./src/app/Screens/VehicleDetails";
+import InspectionDetails from "./src/app/Screens/InspectionDetails";
 const Stack = createStackNavigator();
 
 export default function App() {
@@ -49,6 +50,7 @@ export default function App() {
         <Stack.Screen name="InspectionScreen" component={InspectionScreen} />
         <Stack.Screen name="AllVehicles" component={AllVehicles} />
         <Stack.Screen name="VehicleDetails" component={VehicleDetails} />
+        <Stack.Screen name="InspectionDetails" component={InspectionDetails} />
         <Stack.Screen
           name="ServiceProtectionScreen1"
           component={ServiceProtectionScreen1}
