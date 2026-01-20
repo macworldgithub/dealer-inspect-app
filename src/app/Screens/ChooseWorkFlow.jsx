@@ -7,10 +7,10 @@ import { Truck, Camera } from "lucide-react-native";
 const workflows = [
   {
     id: 1,
-    title: "Service Intake & Valuation",
+    title: "Vehicles",
     subtitle: "Service protection, reconditioning, and trade-in valuation",
     icon: Truck,
-    screen: "ServiceIntake",
+    screen: "AllVehicles",
   },
   {
     id: 2,
