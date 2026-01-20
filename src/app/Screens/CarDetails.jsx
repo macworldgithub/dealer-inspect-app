@@ -7,50 +7,54 @@ import {
   TouchableOpacity,
   ScrollView,
   Modal,
+  Alert,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
-import { ChevronDown } from "lucide-react-native";
+import { ChevronDown, Trash } from "lucide-react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { API_BASE_URL } from "../util/config";
 import { ActivityIndicator } from "react-native";
-import { Trash } from "lucide-react-native";
 const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "CVT", "DCT", "AMT", "OTHER"];
 
-export default function CarDetailsScreen({ navigation }) {
+export default function CarDetailsScreen({ navigation, route }) {
+  const { vehicle, isUpdate } = route.params || {};
+
   const [user, setUser] = useState(null);
-  const [transmission, setTransmission] = useState("");
+  const [transmission, setTransmission] = useState(vehicle?.transmission || "");
   const [transmissionVisible, setTransmissionVisible] = useState(false);
-  const [image, setImage] = useState(null);
+  const [image, setImage] = useState(
+    vehicle?.carImageUrl
+      ? { uploadedKey: vehicle.carImageKey, localUri: vehicle.carImageUrl }
+      : null,
+  );
   const [uploading, setUploading] = useState(false);
-
   const [form, setForm] = useState({
-    make: "",
-    model: "",
-    variant: "",
-    yearOfManufacture: "",
-    registrationNumber: "",
-    chassisNumber: "",
+    make: vehicle?.make || "",
+    model: vehicle?.model || "",
+    variant: vehicle?.variant || "",
+    yearOfManufacture: vehicle?.yearOfManufacture?.toString() || "",
+    registrationNumber: vehicle?.registrationNumber || "",
+    chassisNumber: vehicle?.chassisNumber || "",
   });
+  const [loadingAction, setLoadingAction] = useState(false);
 
+  // Load user
   useEffect(() => {
-    const loadUser = async () => {
+    (async () => {
       const userData = await AsyncStorage.getItem("user");
-      if (userData) {
-        setUser(JSON.parse(userData));
-      }
-    };
-    loadUser();
+      if (userData) setUser(JSON.parse(userData));
+    })();
   }, []);
 
+  // Request image permissions
   useEffect(() => {
     (async () => {
       const { status } =
         await ImagePicker.requestMediaLibraryPermissionsAsync();
-
       if (status !== "granted") {
-        alert("Sorry, we need media library permissions to upload images.");
+        alert("Media library permissions are required to upload images.");
       }
     })();
   }, []);
@@ -73,7 +77,7 @@ export default function CarDetailsScreen({ navigation }) {
         {
           compress: 0.8,
           format: ImageManipulator.SaveFormat.JPEG,
-        }
+        },
       );
 
       uploadImage(manipulated.uri);
@@ -92,11 +96,11 @@ export default function CarDetailsScreen({ navigation }) {
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${await AsyncStorage.getItem(
-              "access_token"
+              "access_token",
             )}`,
           },
           body: JSON.stringify({ fileType }),
-        }
+        },
       );
 
       if (!presignRes.ok) throw new Error("Presigned url fetch failed");
@@ -134,140 +138,149 @@ export default function CarDetailsScreen({ navigation }) {
     }
   };
 
-  const handleCreateVehicle = async () => {
+  // Create or update vehicle
+  const handleSubmit = async () => {
+    if (!transmission) {
+      alert("Please select transmission");
+      return;
+    }
+
+    if (!image) {
+      alert("Please upload an image");
+      return;
+    }
+
+    const payload = {
+      make: form.make,
+      model: form.model,
+      variant: form.variant,
+      yearOfManufacture: Number(form.yearOfManufacture),
+      registrationNumber: form.registrationNumber,
+      chassisNumber: form.chassisNumber,
+      transmission,
+      carImageKey: image.uploadedKey,
+    };
+    console.log(payload, "PAYLOAD");
     try {
-      if (!transmission) {
-        alert("Please select transmission");
-        return;
-      }
+      setLoadingAction(true);
+      const token = await AsyncStorage.getItem("access_token");
+      const url = isUpdate
+        ? `${API_BASE_URL}/vehicle/${vehicle._id}`
+        : `${API_BASE_URL}/vehicle`;
+      const method = isUpdate ? "PATCH" : "POST";
 
-      if (!image) {
-        alert("Please upload an image");
-        return;
-      }
-
-      const payload = {
-        make: form.make,
-        model: form.model,
-        variant: form.variant,
-        yearOfManufacture: Number(form.yearOfManufacture),
-        registrationNumber: form.registrationNumber,
-        chassisNumber: form.chassisNumber,
-        transmission,
-        carImageKey: image.uploadedKey,
-      };
-
-      const res = await fetch(`${API_BASE_URL}/vehicle`, {
-        method: "POST",
+      const res = await fetch(url, {
+        method,
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(payload),
       });
-
+      console.log(res, "RESPONSE");
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.message || "Vehicle creation failed");
+        throw new Error(err.message || "Operation failed");
       }
 
-      const vehicle = await res.json();
-      console.log("Vehicle created:", vehicle);
-      alert("Vehicle Created Successfully");
-      navigation.navigate("InspectionScreen", {
-        vehicleId: vehicle._id,
-        image: image,
-      });
-    } catch (error) {
-      console.error(error);
-      alert(error.message);
+      const data = await res.json();
+      if (isUpdate) {
+        Alert.alert("Success", "Vehicle updated successfully", [
+          { text: "OK", onPress: () => navigation.navigate("ChooseWorkFlow") },
+        ]);
+      } else {
+        Alert.alert("Success", "Vehicle created successfully");
+        navigation.navigate("InspectionScreen", { vehicleId: data._id, image });
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", err.message);
+    } finally {
+      setLoadingAction(false);
     }
   };
 
   return (
-    <>
-      <ScrollView style={tw`flex-1 bg-black`}>
-        {/* Header */}
-        <View style={tw`px-6 pt-12 pb-6`}>
-          <Text style={tw`text-white text-2xl font-bold`}>
-            Hi, {user?.name || "User"}!
-          </Text>
-        </View>
+    <ScrollView style={tw`flex-1 bg-black`} contentContainerStyle={tw`pb-10`}>
+      {/* Header */}
+      <View style={tw`px-6 pt-12 pb-6`}>
+        <Text style={tw`text-white text-2xl font-bold`}>
+          Hi, {user?.name || "User"}!
+        </Text>
+      </View>
 
-        {/* Main Card */}
-        <View style={tw`mx-5 bg-white rounded-3xl p-6 pb-10 shadow-2xl`}>
-          <Text style={tw`text-lg font-bold text-black mt-4`}>
-            Fill Car Details
-          </Text>
+      <View style={tw`mx-5 bg-white rounded-3xl p-6 pb-10 shadow-2xl`}>
+        <Text style={tw`text-lg font-bold text-black mt-4`}>
+          Fill Car Details
+        </Text>
+        <Text style={tw`text-gray-800 text-sm mt-1`}>
+          Enter vehicle information to start inspection
+        </Text>
 
-          <Text style={tw`text-gray-800 text-sm mt-1`}>
-            Enter vehicle information{"\n"}to start inspection
-          </Text>
+        <Image
+          source={require("../../../assets/audi.png")}
+          style={tw`w-42 h-32 absolute -top-10 right-4`}
+          resizeMode="contain"
+        />
 
-          <Image
-            source={require("../../../assets/audi.png")}
-            style={tw`w-42 h-32 absolute -top-10 right-4`}
-            resizeMode="contain"
+        <View style={tw`mt-6`}>
+          <FormField
+            label="Make"
+            value={form.make}
+            onChange={(v) => setForm({ ...form, make: v })}
+          />
+          <FormField
+            label="Model"
+            value={form.model}
+            onChange={(v) => setForm({ ...form, model: v })}
+          />
+          <FormField
+            label="Variant"
+            value={form.variant}
+            onChange={(v) => setForm({ ...form, variant: v })}
+          />
+          <FormField
+            label="Year of Manufacture"
+            keyboardType="numeric"
+            value={form.yearOfManufacture}
+            onChange={(v) => setForm({ ...form, yearOfManufacture: v })}
+          />
+          <FormField
+            label="Registration Number"
+            value={form.registrationNumber}
+            onChange={(v) => setForm({ ...form, registrationNumber: v })}
+          />
+          <FormField
+            label="Chassis Number"
+            value={form.chassisNumber}
+            onChange={(v) => setForm({ ...form, chassisNumber: v })}
           />
 
-          <View style={tw`mt-6`}>
-            <FormField
-              label="Make"
-              value={form.make}
-              onChange={(v) => setForm({ ...form, make: v })}
-            />
-            <FormField
-              label="Model"
-              value={form.model}
-              onChange={(v) => setForm({ ...form, model: v })}
-            />
-            <FormField
-              label="Variant"
-              value={form.variant}
-              onChange={(v) => setForm({ ...form, variant: v })}
-            />
-            <FormField
-              label="Year of Manufacture"
-              keyboardType="numeric"
-              value={form.yearOfManufacture}
-              onChange={(v) => setForm({ ...form, yearOfManufacture: v })}
-            />
-            <FormField
-              label="Registration Number"
-              value={form.registrationNumber}
-              onChange={(v) => setForm({ ...form, registrationNumber: v })}
-            />
-            <FormField
-              label="Chassis Number"
-              value={form.chassisNumber}
-              onChange={(v) => setForm({ ...form, chassisNumber: v })}
-            />
+          <TransmissionField
+            value={transmission}
+            onPress={() => setTransmissionVisible(true)}
+          />
 
-            <TransmissionField
-              value={transmission}
-              onPress={() => setTransmissionVisible(true)}
-            />
-
-            <SingleImageUploadField
-              image={image}
-              onAddImage={pickImage}
-              onDeleteImage={() => setImage(null)}
-              uploading={uploading}
-            />
-          </View>
-
-          <TouchableOpacity
-            onPress={handleCreateVehicle}
-            style={tw`bg-black rounded-full py-3 mt-4`}
-          >
-            <Text style={tw`text-white text-center text-lg font-semibold`}>
-              Start Inspection
-            </Text>
-          </TouchableOpacity>
+          <SingleImageUploadField
+            image={image}
+            onAddImage={pickImage}
+            onDeleteImage={() => setImage(null)}
+            uploading={uploading}
+          />
         </View>
 
-        <View style={tw`h-24`} />
-      </ScrollView>
+        <TouchableOpacity
+          onPress={handleSubmit}
+          style={tw`bg-black rounded-full py-3 mt-4 ${loadingAction ? "opacity-50" : ""}`}
+          disabled={loadingAction}
+        >
+          <Text style={tw`text-white text-center text-lg font-semibold`}>
+            {isUpdate ? "Update Vehicle" : "Start Inspection"}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      <View style={tw`h-24`} />
 
       {/* Transmission Modal */}
       <Modal transparent visible={transmissionVisible} animationType="fade">
@@ -290,7 +303,7 @@ export default function CarDetailsScreen({ navigation }) {
           </View>
         </View>
       </Modal>
-    </>
+    </ScrollView>
   );
 }
 
