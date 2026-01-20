@@ -1,155 +1,3 @@
-// import React, { useEffect, useState } from "react";
-// import {
-//   View,
-//   Text,
-//   ScrollView,
-//   Image,
-//   ActivityIndicator,
-//   TouchableOpacity,
-// } from "react-native";
-// import tw from "tailwind-react-native-classnames";
-// import { getAccessToken } from "../util/storage";
-// import { API_BASE_URL } from "../util/config";
-// import { User, Camera, AlertCircle, DollarSign } from "lucide-react-native";
-
-// export default function InspectionDetails({ route, navigation }) {
-//   const { vehicleId } = route.params;
-//   const [inspection, setInspection] = useState(null);
-//   const [loading, setLoading] = useState(true);
-
-//   useEffect(() => {
-//     const fetchInspection = async () => {
-//       try {
-//         const token = await getAccessToken();
-//         const res = await fetch(
-//           `${API_BASE_URL}/inspection/vehicle/${vehicleId}`,
-//           {
-//             headers: { Authorization: `Bearer ${token}` },
-//           },
-//         );
-//         console.log(res, "RES");
-//         if (!res.ok) throw new Error(`API error ${res.status}`);
-//         const data = await res.json();
-//         console.log(data, "DATA");
-//         if (data.items?.length > 0) {
-//           setInspection(data.items[0]);
-//         }
-//       } catch (err) {
-//         console.error("Failed to fetch inspection:", err.message);
-//       } finally {
-//         setLoading(false);
-//       }
-//     };
-
-//     fetchInspection();
-//   }, [vehicleId]);
-
-//   if (loading)
-//     return <ActivityIndicator style={tw`flex-1`} size="large" color="#fff" />;
-
-//   if (!inspection)
-//     return (
-//       <View style={tw`flex-1 justify-center items-center bg-gray-900`}>
-//         <Text style={tw`text-white text-lg`}>No inspection found</Text>
-//       </View>
-//     );
-
-//   const vehicle = inspection.vehicleId;
-//   const inspector = inspection.inspectedBy;
-
-//   return (
-//     <ScrollView
-//       style={tw`flex-1 bg-gray-900`}
-//       contentContainerStyle={tw`pb-10`}
-//     >
-//       {/* Vehicle Info */}
-//       <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
-//         <Text style={tw`text-2xl font-bold text-white mb-1`}>
-//           {vehicle.make} {vehicle.model}{" "}
-//           {vehicle.variant ? `(${vehicle.variant})` : ""}
-//         </Text>
-//         <Text style={tw`text-gray-400 mb-2`}>
-//           Year: {vehicle.yearOfManufacture} | Reg: {vehicle.registrationNumber}
-//         </Text>
-//         <Text style={tw`text-gray-400 mb-2`}>
-//           Chassis: {vehicle.chassisNumber} | Transmission:{" "}
-//           {vehicle.transmission}
-//         </Text>
-//       </View>
-
-//       {/* Inspector Info */}
-//       <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
-//         <Text style={tw`text-xl font-semibold text-white mb-3`}>Inspector</Text>
-//         <View style={tw`flex-row items-center mb-1`}>
-//           <User size={20} color="#9CA3AF" />
-//           <Text style={tw`text-gray-300 ml-2`}>{inspector.name}</Text>
-//         </View>
-//         <View style={tw`flex-row items-center mb-1`}>
-//           <Camera size={20} color="#9CA3AF" />
-//           <Text style={tw`text-gray-300 ml-2`}>{inspector.role}</Text>
-//         </View>
-//         <View style={tw`flex-row items-center`}>
-//           <AlertCircle size={20} color="#9CA3AF" />
-//           <Text style={tw`text-gray-300 ml-2`}>{inspector.email}</Text>
-//         </View>
-//       </View>
-
-//       {/* Inspection Status */}
-//       <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
-//         <Text style={tw`text-xl font-semibold text-white mb-3`}>Status</Text>
-//         <Text style={tw`text-gray-300`}>{inspection.status}</Text>
-//       </View>
-
-//       {/* Inspection Images */}
-//       <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
-//         <Text style={tw`text-xl font-semibold text-white mb-3`}>
-//           Images & Analysis
-//         </Text>
-//         {inspection.images.map((img) => (
-//           <View key={img._id} style={tw`mb-6`}>
-//             <Text style={tw`text-gray-300 mb-2`}>Original Image</Text>
-//             <Image
-//               source={{ uri: img.originalImageUrl }}
-//               style={tw`w-full h-48 rounded-2xl bg-gray-700 mb-2`}
-//               resizeMode="cover"
-//             />
-//             <Text style={tw`text-gray-300 mb-2`}>Analysed Image</Text>
-//             <Image
-//               source={{ uri: img.analysedImageUrl }}
-//               style={tw`w-full h-48 rounded-2xl bg-gray-700 mb-2`}
-//               resizeMode="cover"
-//             />
-
-//             {/* Damages */}
-//             {img.damages.length > 0 ? (
-//               <View style={tw`mt-2`}>
-//                 <Text style={tw`text-white font-semibold mb-2`}>Damages</Text>
-//                 {img.damages.map((d) => (
-//                   <View key={d._id} style={tw`bg-gray-700 rounded-xl p-4 mb-2`}>
-//                     <Text style={tw`text-red-400 font-semibold mb-1`}>
-//                       {d.type.toUpperCase()} ({d.severity})
-//                     </Text>
-//                     <Text style={tw`text-gray-300 mb-1`}>{d.description}</Text>
-//                     <View style={tw`flex-row items-center`}>
-//                       <DollarSign size={16} color="#9CA3AF" />
-//                       <Text style={tw`text-gray-300 ml-2`}>
-//                         ${d.repair_cost_estimate.min} - $
-//                         {d.repair_cost_estimate.max}{" "}
-//                         {d.repair_cost_estimate.currency}
-//                       </Text>
-//                     </View>
-//                   </View>
-//                 ))}
-//               </View>
-//             ) : (
-//               <Text style={tw`text-gray-400 mt-2`}>No damages found</Text>
-//             )}
-//           </View>
-//         ))}
-//       </View>
-//     </ScrollView>
-//   );
-// }
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -158,17 +6,30 @@ import {
   Image,
   ActivityIndicator,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { getAccessToken } from "../util/storage";
 import { API_BASE_URL } from "../util/config";
-import { User, Camera, AlertCircle, DollarSign } from "lucide-react-native";
+import {
+  User,
+  Camera,
+  AlertCircle,
+  DollarSign,
+  Scan,
+  Trash,
+  Plus,
+} from "lucide-react-native";
+import * as ImagePicker from "expo-image-picker";
+import * as ImageManipulator from "expo-image-manipulator";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
-export default function InspectionDetails({ route, navigation }) {
+export default function InspectionDetails({ route }) {
   const { vehicleId } = route.params;
   const [inspection, setInspection] = useState(null);
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     const fetchInspection = async () => {
@@ -183,16 +44,13 @@ export default function InspectionDetails({ route, navigation }) {
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
 
-        if (data.items?.length > 0) {
-          setInspection(data.items[0]);
-        }
+        if (data.items?.length > 0) setInspection(data.items[0]);
       } catch (err) {
         console.error("Failed to fetch inspection:", err.message);
       } finally {
         setLoading(false);
       }
     };
-
     fetchInspection();
   }, [vehicleId]);
 
@@ -213,105 +71,155 @@ export default function InspectionDetails({ route, navigation }) {
   const vehicle = inspection.vehicleId;
   const inspector = inspection.inspectedBy;
   const images = inspection.images || [];
-
   const totalImages = images.length;
-  const currentPage = currentImageIndex + 1;
+  const currentImg = images[currentImageIndex] || null;
 
-  const goToImagePage = (targetIndex) => {
-    if (targetIndex < 0 || targetIndex >= totalImages) return;
-    setCurrentImageIndex(targetIndex);
+  const getSignedGetUrl = async (key) => {
+    const res = await fetch(`${API_BASE_URL}/aws/signed-url`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify({ key }),
+    });
+    const data = await res.json();
+    return data.url;
   };
 
-  const renderPagination = () => {
-    if (totalImages <= 1) return null;
+  // Upload / Replace image
+  const updateImage = async (imageIndex) => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.8,
+      });
+      if (result.canceled) return;
 
-    return (
-      <View style={tw`mx-6 mb-8 pb-4 border-t border-gray-800 pt-2`}>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={tw`py-2`}
-        >
-          <View style={tw`flex-row items-center space-x-2.5`}>
-            {/* Previous */}
-            {currentPage > 1 && (
-              <TouchableOpacity
-                onPress={() => goToImagePage(currentImageIndex - 1)}
-                style={tw`w-10 h-10 items-center justify-center rounded-full bg-gray-800 border border-gray-700`}
-              >
-                <Text style={tw`text-gray-300 text-lg font-bold`}>‹</Text>
-              </TouchableOpacity>
-            )}
+      setUploading(true);
+      const manipulated = await ImageManipulator.manipulateAsync(
+        result.assets[0].uri,
+        [{ resize: { width: 1400 } }],
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
+      );
 
-            {/* Page numbers with ellipsis logic */}
-            {Array.from({ length: totalImages }).map((_, i) => {
-              const pageNum = i + 1;
-              const isActive = pageNum === currentPage;
-              const isNearCurrent =
-                Math.abs(pageNum - currentPage) <= 2 ||
-                pageNum === 1 ||
-                pageNum === totalImages;
+      // Presigned URL
+      const presignRes = await fetch(
+        `${API_BASE_URL}/inspection/presigned/original`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({ fileType: "image/jpeg" }),
+        },
+      );
+      const { url, key } = await presignRes.json();
+      const blob = await (await fetch(manipulated.uri)).blob();
+      await fetch(url, {
+        method: "PUT",
+        headers: { "Content-Type": "image/jpeg" },
+        body: blob,
+      });
 
-              if (!isNearCurrent && pageNum !== 1 && pageNum !== totalImages) {
-                if (
-                  pageNum === currentPage - 3 ||
-                  pageNum === currentPage + 3
-                ) {
-                  return (
-                    <Text
-                      key={pageNum}
-                      style={tw`text-gray-500 w-10 text-center text-base`}
-                    >
-                      ...
-                    </Text>
-                  );
-                }
-                return null;
-              }
+      // PATCH backend
+      const imageToUpdate = inspection.images[currentImageIndex]; // from state
+      console.log(imageToUpdate, "IMAGE");
+      const imageId = imageToUpdate._id;
 
-              return (
-                <TouchableOpacity
-                  key={pageNum}
-                  onPress={() => goToImagePage(i)}
-                  style={tw.style(
-                    `w-10 h-10 items-center justify-center rounded-lg border`,
-                    isActive
-                      ? `bg-green-600 border-green-500 shadow-md`
-                      : `bg-gray-800 border-gray-700`,
-                  )}
-                >
-                  <Text
-                    style={tw.style(
-                      `text-base font-medium`,
-                      isActive ? `text-white font-bold` : `text-gray-300`,
-                    )}
-                  >
-                    {pageNum}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
+      // Build body using existing fields
+      const bodyPayload = {
+        originalImageKey: key, // keep same
+        analysedImageKey: imageToUpdate.analysedImageKey, // update after analysis
+        aiRaw: imageToUpdate.aiRaw || {}, // preserve previous data
+        damages: imageToUpdate.damages || [], // preserve previous damages
+      };
+      console.log(bodyPayload, "Payload");
+      // If you just uploaded a new image, replace originalImageKey
+      //   bodyPayload.originalImageKey = key;
 
-            {/* Next */}
-            {currentPage < totalImages && (
-              <TouchableOpacity
-                onPress={() => goToImagePage(currentImageIndex + 1)}
-                style={tw`w-10 h-10 items-center justify-center rounded-full bg-gray-800 border border-gray-700`}
-              >
-                <Text style={tw`text-gray-300 text-lg font-bold`}>›</Text>
-              </TouchableOpacity>
-            )}
-          </View>
-        </ScrollView>
+      const token = await AsyncStorage.getItem("access_token");
 
-        <Text style={tw`text-center text-gray-500 text-xs mt-3`}>
-          Image {currentPage} of {totalImages}
-        </Text>
-      </View>
-    );
+      const res = await fetch(
+        `${API_BASE_URL}/inspection/${inspection._id}/images/${imageId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify(bodyPayload),
+        },
+      );
+      console.log(res, "RES");
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Failed to update inspection image");
+      }
+
+      console.log(await res.json(), "PATCH response successful");
+      const signedUrl = await getSignedGetUrl(key);
+      const updatedImages = [...inspection.images];
+      updatedImages[imageIndex].originalImageKey = key;
+      updatedImages[imageIndex].originalImageUrl = signedUrl;
+      setInspection({ ...inspection, images: updatedImages });
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Image update failed", err.message);
+    } finally {
+      setUploading(false);
+    }
   };
 
-  const currentImg = images[currentImageIndex];
+  // Analyze image
+  const analyzeImage = async (imageIndex) => {
+    try {
+      const img = inspection.images[imageIndex];
+      const updatedImages = [...inspection.images];
+      updatedImages[imageIndex].analysing = true;
+      setInspection({ ...inspection, images: updatedImages });
+
+      const res = await fetch(
+        "https://www.dealer-microservice.omnisuiteai.com/analyze",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ image_url: img.originalImageUrl }),
+        },
+      );
+      if (!res.ok) throw new Error("Analysis failed");
+      const data = await res.json();
+
+      // PATCH analyzed image
+      await fetch(
+        `${API_BASE_URL}/inspection/${inspection._id}/images/${img.originalImageKey}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
+          },
+          body: JSON.stringify({ analysedImageKey: data.analysedImageKey }),
+        },
+      );
+
+      const signedUrl = await getSignedGetUrl(data.analysedImageKey);
+      updatedImages[imageIndex] = {
+        ...updatedImages[imageIndex],
+        analysedImageUrl: signedUrl,
+        damages: data.damages,
+        analysing: false,
+      };
+      setInspection({ ...inspection, images: updatedImages });
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Analysis failed", err.message);
+      const updatedImages = [...inspection.images];
+      updatedImages[imageIndex].analysing = false;
+      setInspection({ ...inspection, images: updatedImages });
+    }
+  };
 
   return (
     <ScrollView
@@ -356,75 +264,112 @@ export default function InspectionDetails({ route, navigation }) {
         <Text style={tw`text-gray-300`}>{inspection.status}</Text>
       </View>
 
-      {/* Inspection Images - Paginated */}
+      {/* Inspection Images */}
       <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
         <Text style={tw`text-xl font-semibold text-white mb-4`}>
           Images & Analysis
         </Text>
 
-        {images.length === 0 ? (
-          <Text style={tw`text-gray-400 text-center py-6`}>
-            No images in this inspection
-          </Text>
-        ) : (
+        {currentImg ? (
           <>
-            {/* Current Image Content */}
-            <View>
-              <Text style={tw`text-gray-300 mb-2 font-medium`}>
-                {currentImg.stepName || `Image ${currentPage}`}
-              </Text>
+            {/* Original Image */}
+            <Text style={tw`text-gray-400 mb-1`}>Original Image</Text>
+            <Image
+              source={{ uri: currentImg.originalImageUrl }}
+              style={tw`w-full h-56 rounded-2xl bg-gray-700 mb-4`}
+              resizeMode="cover"
+            />
 
-              <Text style={tw`text-gray-400 mb-1`}>Original Image</Text>
-              <Image
-                source={{ uri: currentImg.originalImageUrl }}
-                style={tw`w-full h-56 rounded-2xl bg-gray-700 mb-4`}
-                resizeMode="cover"
-              />
+            <TouchableOpacity
+              style={tw`mb-4 bg-green-600 py-3 rounded-full items-center`}
+              onPress={() => updateImage(currentImageIndex)}
+              disabled={uploading}
+            >
+              <Plus size={18} color="#fff" />
+              <Text style={tw`text-white ml-2 mt-1`}>Update Image</Text>
+            </TouchableOpacity>
 
-              <Text style={tw`text-gray-400 mb-1`}>Analysed Image</Text>
-              <Image
-                source={{ uri: currentImg.analysedImageUrl }}
-                style={tw`w-full h-56 rounded-2xl bg-gray-700 mb-4`}
-                resizeMode="cover"
-              />
-
-              {/* Damages */}
-              {currentImg.damages?.length > 0 ? (
-                <View style={tw`mt-3`}>
-                  <Text style={tw`text-white font-semibold mb-2`}>Damages</Text>
-                  {currentImg.damages.map((d) => (
-                    <View
-                      key={d._id || `${currentImageIndex}-${d.type}`}
-                      style={tw`bg-gray-700 rounded-xl p-4 mb-3`}
-                    >
-                      <Text style={tw`text-red-400 font-semibold mb-1`}>
-                        {d.type.toUpperCase()} ({d.severity || "N/A"})
-                      </Text>
-                      <Text style={tw`text-gray-300 mb-1`}>
-                        {d.description}
-                      </Text>
-                      <View style={tw`flex-row items-center`}>
-                        <DollarSign size={16} color="#9CA3AF" />
-                        <Text style={tw`text-gray-300 ml-2`}>
-                          ${d.repair_cost_estimate?.min || "?"} - $
-                          {d.repair_cost_estimate?.max || "?"}{" "}
-                          {d.repair_cost_estimate?.currency || ""}
+            {/* Analysed Image */}
+            {currentImg.analysedImageUrl ? (
+              <View>
+                <Text style={tw`text-gray-400 mb-1`}>Analysed Image</Text>
+                <Image
+                  source={{ uri: currentImg.analysedImageUrl }}
+                  style={tw`w-full h-56 rounded-2xl bg-gray-700 mb-4`}
+                />
+                {/* Damages */}
+                {currentImg.damages?.length > 0 ? (
+                  <View>
+                    <Text style={tw`text-white font-semibold mb-2`}>
+                      Damages
+                    </Text>
+                    {currentImg.damages.map((d, i) => (
+                      <View key={i} style={tw`bg-gray-700 p-3 rounded-xl mb-2`}>
+                        <Text style={tw`text-red-400 font-semibold`}>
+                          {d.type.toUpperCase()} ({d.severity})
                         </Text>
+                        <Text style={tw`text-gray-300`}>{d.description}</Text>
+                        <View style={tw`flex-row items-center`}>
+                          <DollarSign size={16} color="#9CA3AF" />
+                          <Text style={tw`text-gray-300 ml-2`}>
+                            ${d.repair_cost_estimate?.min} - $
+                            {d.repair_cost_estimate?.max}{" "}
+                            {d.repair_cost_estimate?.currency}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-                  ))}
-                </View>
-              ) : (
-                <Text style={tw`text-gray-400 mt-3`}>No damages found</Text>
-              )}
-            </View>
-
-            {renderPagination()}
+                    ))}
+                  </View>
+                ) : (
+                  <Text style={tw`text-gray-400`}>No damages found</Text>
+                )}
+              </View>
+            ) : (
+              <TouchableOpacity
+                style={tw`mb-4 bg-black py-3 rounded-full items-center flex-row justify-center`}
+                onPress={() => analyzeImage(currentImageIndex)}
+                disabled={currentImg.analysing}
+              >
+                {currentImg.analysing ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <>
+                    <Scan size={18} color="#fff" />
+                    <Text style={tw`text-white ml-2`}>Analyze</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            )}
           </>
+        ) : (
+          <Text style={tw`text-gray-400 text-center py-6`}>
+            No images available
+          </Text>
         )}
       </View>
 
-      <View style={tw`h-10`} />
+      {/* Pagination */}
+      {totalImages > 1 && (
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={tw`mx-6 mt-4`}
+        >
+          <View style={tw`flex-row space-x-2`}>
+            {images.map((_, i) => (
+              <TouchableOpacity
+                key={i}
+                onPress={() => setCurrentImageIndex(i)}
+                style={tw`px-3 py-1 rounded-md ${i === currentImageIndex ? "bg-green-600" : "bg-gray-800"}`}
+              >
+                <Text style={tw`text-white`}>{i + 1}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </ScrollView>
+      )}
+
+      <View style={tw`h-20`} />
     </ScrollView>
   );
 }
