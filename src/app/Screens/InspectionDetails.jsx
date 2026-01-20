@@ -31,6 +31,19 @@ export default function InspectionDetails({ route }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
 
+   const getSignedGetUrl = async (key) => {
+    const res = await fetch(`${API_BASE_URL}/aws/signed-url`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
+      },
+      body: JSON.stringify({ key }),
+    });
+    const data = await res.json();
+    return data.url;
+  };
+
   useEffect(() => {
     const fetchInspection = async () => {
       try {
@@ -44,7 +57,20 @@ export default function InspectionDetails({ route }) {
         if (!res.ok) throw new Error(`API error ${res.status}`);
         const data = await res.json();
 
-        if (data.items?.length > 0) setInspection(data.items[0]);
+        if (data.items?.length > 0) {
+          const inspectionData = data.items[0];
+
+          const imagesWithUrls = await Promise.all(
+            (inspectionData.images || []).map(async (img) => ({
+              ...img,
+              analysedImageUrl: img.analysedImageKey
+                ? await getSignedGetUrl(img.analysedImageKey)
+                : null,
+            })),
+          );
+
+          setInspection({ ...inspectionData, images: imagesWithUrls });
+        }
       } catch (err) {
         console.error("Failed to fetch inspection:", err.message);
       } finally {
@@ -74,18 +100,7 @@ export default function InspectionDetails({ route }) {
   const totalImages = images.length;
   const currentImg = images[currentImageIndex] || null;
 
-  const getSignedGetUrl = async (key) => {
-    const res = await fetch(`${API_BASE_URL}/aws/signed-url`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
-      },
-      body: JSON.stringify({ key }),
-    });
-    const data = await res.json();
-    return data.url;
-  };
+ 
 
   // Upload / Replace image
   const updateImage = async (imageIndex) => {
@@ -130,11 +145,13 @@ export default function InspectionDetails({ route }) {
 
       // Build body using existing fields
       const bodyPayload = {
-        originalImageKey: key, // keep same
-        analysedImageKey: imageToUpdate.analysedImageKey, // update after analysis
-        aiRaw: imageToUpdate.aiRaw || {}, // preserve previous data
-        damages: imageToUpdate.damages || [], // preserve previous damages
+        originalImageKey: key,
+
+        analysedImageKey: null,
+        aiRaw: {},
+        damages: [],
       };
+
       console.log(bodyPayload, "Payload");
       // If you just uploaded a new image, replace originalImageKey
       //   bodyPayload.originalImageKey = key;
@@ -161,8 +178,18 @@ export default function InspectionDetails({ route }) {
       console.log(await res.json(), "PATCH response successful");
       const signedUrl = await getSignedGetUrl(key);
       const updatedImages = [...inspection.images];
-      updatedImages[imageIndex].originalImageKey = key;
-      updatedImages[imageIndex].originalImageUrl = signedUrl;
+      updatedImages[imageIndex] = {
+        ...updatedImages[imageIndex],
+        originalImageKey: key,
+        originalImageUrl: signedUrl,
+
+        analysedImageKey: null,
+        analysedImageUrl: null,
+        aiRaw: {},
+        damages: [],
+        analysing: false,
+      };
+
       setInspection({ ...inspection, images: updatedImages });
     } catch (err) {
       console.error(err);
@@ -188,29 +215,37 @@ export default function InspectionDetails({ route }) {
           body: JSON.stringify({ image_url: img.originalImageUrl }),
         },
       );
+      console.log(res, "RES")
       if (!res.ok) throw new Error("Analysis failed");
       const data = await res.json();
 
       // PATCH analyzed image
       await fetch(
-        `${API_BASE_URL}/inspection/${inspection._id}/images/${img.originalImageKey}`,
+        `${API_BASE_URL}/inspection/${inspection._id}/images/${img._id}`,
         {
           method: "PATCH",
           headers: {
             "Content-Type": "application/json",
             Authorization: `Bearer ${await AsyncStorage.getItem("access_token")}`,
           },
-          body: JSON.stringify({ analysedImageKey: data.analysedImageKey }),
+          body: JSON.stringify({
+            analysedImageKey: data.analysedImageKey,
+            aiRaw: data.aiRaw || {},
+            damages: data.damages || [],
+          }),
         },
       );
 
       const signedUrl = await getSignedGetUrl(data.analysedImageKey);
       updatedImages[imageIndex] = {
         ...updatedImages[imageIndex],
+        analysedImageKey: data.analysedImageKey,
         analysedImageUrl: signedUrl,
-        damages: data.damages,
+        aiRaw: data.aiRaw || {},
+        damages: data.damages || [],
         analysing: false,
       };
+
       setInspection({ ...inspection, images: updatedImages });
     } catch (err) {
       console.error(err);
@@ -285,7 +320,6 @@ export default function InspectionDetails({ route }) {
               onPress={() => updateImage(currentImageIndex)}
               disabled={uploading}
             >
-              <Plus size={18} color="#fff" />
               <Text style={tw`text-white ml-2 mt-1`}>Update Image</Text>
             </TouchableOpacity>
 
