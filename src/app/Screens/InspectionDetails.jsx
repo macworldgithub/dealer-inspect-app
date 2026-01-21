@@ -397,6 +397,46 @@ export default function InspectionDetails({ route, navigation }) {
       setUpdatingDamage(false);
     }
   };
+
+  // 🔹 UPDATE INSPECTION STATUS (NEW)
+  const updateInspectionStatus = async (newStatus) => {
+    try {
+      const token = await AsyncStorage.getItem("access_token");
+
+      const res = await fetch(
+        `${API_BASE_URL}/inspection/${inspection._id}/status`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "*/*",
+          },
+          body: JSON.stringify({ status: newStatus }),
+        },
+      );
+
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Failed to update status");
+      }
+
+      const updatedInspection = await res.json();
+
+      // 🔹 Update local state
+      setInspection((prev) => ({
+        ...prev,
+        status: updatedInspection.status,
+        updatedAt: updatedInspection.updatedAt,
+      }));
+
+      Alert.alert("Success", `Inspection marked as ${newStatus}`);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", err.message || "Status update failed");
+    }
+  };
+
   return (
     <ScrollView
       style={tw`flex-1 bg-gray-900 pt-12 px-2`}
@@ -445,7 +485,24 @@ export default function InspectionDetails({ route, navigation }) {
       {/* Inspection Status */}
       <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
         <Text style={tw`text-xl font-semibold text-white mb-3`}>Status</Text>
-        <Text style={tw`text-gray-300`}>{inspection.status}</Text>
+
+        <Text
+          style={tw`text-gray-300 mb-4 ${
+            inspection.status === "COMPLETED" ? "text-green-400" : ""
+          }`}
+        >
+          {inspection.status}
+        </Text>
+
+        {/* 🔹 Mark Completed Button */}
+        {inspection.status !== "COMPLETED" && (
+          <TouchableOpacity
+            style={tw`bg-green-600 py-3 rounded-full items-center`}
+            onPress={() => updateInspectionStatus("COMPLETED")}
+          >
+            <Text style={tw`text-white font-semibold`}>Mark as Completed</Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Inspection Images */}
@@ -494,7 +551,7 @@ export default function InspectionDetails({ route, navigation }) {
                       >
                         {/* Edit icon – top right corner */}
                         <TouchableOpacity
-                          style={tw`absolute top-2 right-2 p-3 bg-gray-800 rounded-full z-10`} // ← bigger touch area + z-index
+                          style={tw`absolute top-2 right-2 p-3 bg-gray-800 rounded-full z-10`}
                           onPress={() => {
                             console.log(
                               "Edit icon clicked for damage:",

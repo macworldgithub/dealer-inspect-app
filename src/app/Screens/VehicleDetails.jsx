@@ -104,8 +104,8 @@ export default function VehicleDetails({ route, navigation }) {
 
   return (
     <ScrollView
-      style={tw`flex-1 bg-gray-900 pt-14 px-6`}
-      contentContainerStyle={tw`pb-10`}
+      style={tw`flex-1 bg-gray-900 pt-8 px-6`}
+      contentContainerStyle={tw`pb-6`}
     >
       <View style={tw`flex-row items-center mb-6`}>
         <TouchableOpacity
@@ -125,13 +125,13 @@ export default function VehicleDetails({ route, navigation }) {
             ? { uri: vehicle.carImageUrl }
             : require("../../../assets/car-placeholder.png")
         }
-        style={tw`w-full h-56 bg-gray-800`}
+        style={tw`w-full h-52 bg-gray-800`}
         resizeMode="cover"
       />
 
       {/* Vehicle Info */}
-      <View style={tw`bg-gray-800 mx-4 mt-2 p-6 rounded-2xl shadow-lg`}>
-        <Text style={tw`text-3xl font-bold text-white mb-1`}>
+      <View style={tw`bg-gray-800 mx-4 mt-2 p-6 rounded-xl shadow-lg`}>
+        <Text style={tw`text-xl font-bold text-white mb-1`}>
           {vehicle.make} {vehicle.model}
         </Text>
         {vehicle.variant && (
@@ -169,12 +169,12 @@ export default function VehicleDetails({ route, navigation }) {
 
       {/* Inspections */}
       <View style={tw`bg-gray-800 mx-4 mt-2 p-6 rounded-2xl shadow-lg`}>
-        <Text style={tw`text-xl font-semibold text-white mb-3`}>
+        <Text style={tw`text-xl font-semibold text-white mb-1`}>
           Inspections
         </Text>
         {vehicle.inspectionIds && vehicle.inspectionIds.length > 0 ? (
           <TouchableOpacity
-            style={tw`bg-green-500 py-3 px-4 rounded-full items-center`}
+            style={tw`bg-green-500 py-2 px-2 rounded-full items-center`}
             onPress={() =>
               navigation.navigate("InspectionDetails", {
                 vehicleId: vehicle._id,
@@ -192,7 +192,7 @@ export default function VehicleDetails({ route, navigation }) {
       </View>
 
       {/* Action Buttons */}
-      <View style={tw`flex-row justify-between mx-4 mt-6`}>
+      <View style={tw`flex-row justify-between mx-4 mt-2`}>
         <TouchableOpacity
           onPress={handleUpdate}
           style={tw`flex-1 bg-black py-3 rounded-2xl mr-2 items-center`}
