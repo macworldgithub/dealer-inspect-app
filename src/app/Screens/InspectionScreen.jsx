@@ -14,7 +14,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import tw from "tailwind-react-native-classnames";
 import { Plus, Scan } from "lucide-react-native";
 import { API_BASE_URL } from "../util/config";
-import { Trash } from "lucide-react-native";
+import { Trash, ArrowLeft } from "lucide-react-native";
 
 // const TOTAL_STEPS = 20;
 
@@ -278,18 +278,25 @@ export default function InspectionScreen({ route, navigation }) {
   };
 
   return (
-    <ScrollView style={tw`flex-1 bg-black`}>
-      {/* Header */}
-      <View style={tw`px-6 pt-12 pb-4`}>
+ <ScrollView
+      style={tw`flex-1 bg-gray-900 pt-12 px-2`}
+      contentContainerStyle={tw`pb-10`}
+    >
+      <View style={tw`flex-row items-center mb-6`}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={tw`mr-4 p-2 rounded-full bg-gray-900 border border-gray-800`}
+        >
+          <ArrowLeft size={22} color="#fff" />
+        </TouchableOpacity>
         <Text style={tw`text-white text-2xl font-bold`}>
           {INSPECTION_STEPS[currentStep]}
         </Text>
-
-        <Text style={tw`text-gray-400`}>
+      </View>
+       <Text style={tw`text-gray-400 px-8 mb-4`}>
           Inspection Image {currentStep + 1} • Step {currentStep + 1} of{" "}
           {TOTAL_STEPS}
         </Text>
-      </View>
 
       {/* Upload */}
       {!img &&

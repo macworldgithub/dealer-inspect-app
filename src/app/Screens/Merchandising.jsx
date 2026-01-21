@@ -28,7 +28,7 @@ export default function ServiceIntake({ navigation }) {
     <View style={tw`flex-1 bg-black`}>
       {/* Header */}
       <View style={tw`flex-row justify-between items-center px-6 pt-16 pb-6`}>
-        <Text style={tw`text-3xl font-bold text-white`}>Hi, Martin!</Text>
+        <Text style={tw`text-3xl font-bold text-white`}>Hi!</Text>
 
         <View style={tw`flex-row items-center`}>
           <Image

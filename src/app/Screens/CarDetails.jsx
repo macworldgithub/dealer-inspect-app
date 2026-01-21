@@ -16,6 +16,8 @@ import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import { API_BASE_URL } from "../util/config";
 import { ActivityIndicator } from "react-native";
+import { ArrowLeft } from "lucide-react-native";
+
 const TRANSMISSIONS = ["MANUAL", "AUTOMATIC", "CVT", "DCT", "AMT", "OTHER"];
 
 export default function CarDetailsScreen({ navigation, route }) {
@@ -201,9 +203,18 @@ export default function CarDetailsScreen({ navigation, route }) {
   };
 
   return (
-    <ScrollView style={tw`flex-1 bg-black`} contentContainerStyle={tw`pb-10`}>
-      {/* Header */}
-      <View style={tw`px-6 pt-12 pb-6`}>
+    <ScrollView
+      style={tw`flex-1 bg-gray-900 pt-12 px-2`}
+      contentContainerStyle={tw`pb-10`}
+    >
+      <View style={tw`flex-row items-center mb-6`}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={tw`mr-4 p-2 rounded-full bg-gray-900 border border-gray-800`}
+        >
+          <ArrowLeft size={22} color="#fff" />
+        </TouchableOpacity>
+
         <Text style={tw`text-white text-2xl font-bold`}>
           Hi, {user?.name || "User"}!
         </Text>

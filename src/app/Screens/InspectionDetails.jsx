@@ -21,6 +21,7 @@ import {
   Trash,
   Plus,
   Pencil,
+  ArrowLeft,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
@@ -28,7 +29,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import Modal from "react-native-modal";
 import { Picker } from "@react-native-picker/picker";
 
-export default function InspectionDetails({ route }) {
+export default function InspectionDetails({ route, navigation }) {
   const { vehicleId } = route.params;
   const [inspection, setInspection] = useState(null);
   console.log(inspection);
@@ -398,11 +399,19 @@ export default function InspectionDetails({ route }) {
   };
   return (
     <ScrollView
-      style={tw`flex-1 bg-gray-900`}
+      style={tw`flex-1 bg-gray-900 pt-12 px-2`}
       contentContainerStyle={tw`pb-10`}
     >
+      <View style={tw`flex-row items-center mb-6`}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={tw`mr-4 p-2 rounded-full bg-gray-900 border border-gray-800 ml-2`}
+        >
+          <ArrowLeft size={22} color="#fff" />
+        </TouchableOpacity>
+      </View>
       {/* Vehicle Info */}
-      <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
+      <View style={tw`bg-gray-800 mx-4 p-6 rounded-2xl shadow-lg`}>
         <Text style={tw`text-2xl font-bold text-white mb-1`}>
           {vehicle.make} {vehicle.model}{" "}
           {vehicle.variant ? `(${vehicle.variant})` : ""}

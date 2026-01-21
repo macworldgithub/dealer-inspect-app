@@ -115,7 +115,7 @@ export default function VehicleDetails({ route, navigation }) {
           <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={tw`text-3xl font-bold text-white`}>Vehicles Detail</Text>
+        <Text style={tw`text-xl font-bold text-white`}>Vehicles Detail</Text>
       </View>
 
       {/* Vehicle Image */}
@@ -125,12 +125,12 @@ export default function VehicleDetails({ route, navigation }) {
             ? { uri: vehicle.carImageUrl }
             : require("../../../assets/car-placeholder.png")
         }
-        style={tw`w-full h-64 bg-gray-800`}
+        style={tw`w-full h-56 bg-gray-800`}
         resizeMode="cover"
       />
 
       {/* Vehicle Info */}
-      <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
+      <View style={tw`bg-gray-800 mx-4 mt-2 p-6 rounded-2xl shadow-lg`}>
         <Text style={tw`text-3xl font-bold text-white mb-1`}>
           {vehicle.make} {vehicle.model}
         </Text>
@@ -168,7 +168,7 @@ export default function VehicleDetails({ route, navigation }) {
       </View>
 
       {/* Inspections */}
-      <View style={tw`bg-gray-800 mx-4 mt-6 p-6 rounded-2xl shadow-lg`}>
+      <View style={tw`bg-gray-800 mx-4 mt-2 p-6 rounded-2xl shadow-lg`}>
         <Text style={tw`text-xl font-semibold text-white mb-3`}>
           Inspections
         </Text>
