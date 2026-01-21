@@ -13,6 +13,7 @@ import tw from "tailwind-react-native-classnames";
 import { Search } from "lucide-react-native";
 import { API_BASE_URL } from "../util/config";
 import { getAccessToken } from "../util/storage";
+import { ArrowLeft } from "lucide-react-native";
 
 export default function AllVehicles({ navigation }) {
   const [vehicles, setVehicles] = useState([]);
@@ -203,7 +204,16 @@ export default function AllVehicles({ navigation }) {
 
   return (
     <View style={tw`flex-1 bg-black px-6 pt-14`}>
-      <Text style={tw`text-3xl font-bold text-white mb-5`}>Vehicles</Text>
+      <View style={tw`flex-row items-center mb-6`}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={tw`mr-4 p-2 rounded-full bg-gray-900 border border-gray-800`}
+        >
+          <ArrowLeft size={22} color="#fff" />
+        </TouchableOpacity>
+
+        <Text style={tw`text-3xl font-bold text-white`}>Vehicles</Text>
+      </View>
 
       {/* Search */}
       <View

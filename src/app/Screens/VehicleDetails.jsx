@@ -20,6 +20,7 @@ import {
   Trash2,
   Edit3,
 } from "lucide-react-native";
+import { ArrowLeft } from "lucide-react-native";
 
 export default function VehicleDetails({ route, navigation }) {
   const { vehicleId } = route.params;
@@ -74,7 +75,6 @@ export default function VehicleDetails({ route, navigation }) {
 
               Alert.alert("Success", "Vehicle deleted successfully");
               navigation.replace("AllVehicles");
-              
             } catch (err) {
               console.error(err);
               Alert.alert("Error", err.message);
@@ -104,9 +104,20 @@ export default function VehicleDetails({ route, navigation }) {
 
   return (
     <ScrollView
-      style={tw`flex-1 bg-gray-900`}
+      style={tw`flex-1 bg-gray-900 pt-14 px-6`}
       contentContainerStyle={tw`pb-10`}
     >
+      <View style={tw`flex-row items-center mb-6`}>
+        <TouchableOpacity
+          onPress={() => navigation.goBack()}
+          style={tw`mr-4 p-2 rounded-full bg-gray-900 border border-gray-800`}
+        >
+          <ArrowLeft size={22} color="#fff" />
+        </TouchableOpacity>
+
+        <Text style={tw`text-3xl font-bold text-white`}>Vehicles Detail</Text>
+      </View>
+
       {/* Vehicle Image */}
       <Image
         source={
@@ -166,7 +177,7 @@ export default function VehicleDetails({ route, navigation }) {
             style={tw`bg-green-500 py-3 px-4 rounded-full items-center`}
             onPress={() =>
               navigation.navigate("InspectionDetails", {
-                vehicleId: vehicle._id, 
+                vehicleId: vehicle._id,
               })
             }
           >
