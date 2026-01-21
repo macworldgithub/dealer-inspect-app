@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Alert,
+  TextInput,
 } from "react-native";
 import tw from "tailwind-react-native-classnames";
 import { getAccessToken } from "../util/storage";
@@ -19,10 +20,13 @@ import {
   Scan,
   Trash,
   Plus,
+  Pencil,
 } from "lucide-react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as ImageManipulator from "expo-image-manipulator";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Modal from "react-native-modal";
+import { Picker } from "@react-native-picker/picker";
 
 export default function InspectionDetails({ route }) {
   const { vehicleId } = route.params;
@@ -31,6 +35,18 @@ export default function InspectionDetails({ route }) {
   const [loading, setLoading] = useState(true);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [uploading, setUploading] = useState(false);
+
+  const [isDamageModalVisible, setDamageModalVisible] = useState(false);
+  const [selectedDamage, setSelectedDamage] = useState(null);
+  const [formData, setFormData] = useState({
+    type: "",
+    severity: "moderate",
+    description: "",
+    confidence: "0.9",
+    minCost: "",
+    maxCost: "",
+  });
+  const [updatingDamage, setUpdatingDamage] = useState(false);
 
   const getSignedGetUrl = async (key) => {
     const res = await fetch(`${API_BASE_URL}/aws/signed-url`, {
@@ -295,7 +311,91 @@ export default function InspectionDetails({ route }) {
       ],
     );
   };
+  const openUpdateDamageModal = (damage) => {
+    console.log("Opening modal for damage:", damage?._id, damage?.type); // ← debug 2
 
+    if (!damage) {
+      console.log("No damage object received");
+      return;
+    }
+
+    setSelectedDamage(damage);
+    setFormData({
+      type: damage.type || "dent",
+      severity: damage.severity || "moderate",
+      description: damage.description || "",
+      confidence: damage.confidence?.toString() || "0.9",
+      minCost: damage.repair_cost_estimate?.min?.toString() || "",
+      maxCost: damage.repair_cost_estimate?.max?.toString() || "",
+    });
+
+    console.log("Setting modal visible to true"); // ← debug 3
+    setDamageModalVisible(true);
+  };
+
+  const handleUpdateDamage = async () => {
+    if (!selectedDamage) return;
+
+    const damageId = selectedDamage._id;
+
+    const payload = {
+      type: formData.type,
+      severity: formData.severity,
+      confidence: parseFloat(formData.confidence) || 0.9,
+      bbox: selectedDamage.bbox || [0, 0, 1, 1],
+      description: formData.description.trim(),
+      repair_cost_estimate: {
+        currency: "USD",
+        min: parseInt(formData.minCost) || 0,
+        max: parseInt(formData.maxCost) || 0,
+      },
+    };
+
+    try {
+      setUpdatingDamage(true);
+
+      const token = await AsyncStorage.getItem("access_token");
+
+      const res = await fetch(
+        `${API_BASE_URL}/inspection/${inspection._id}/images/${currentImg._id}/damages/${damageId}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+            Accept: "*/*",
+          },
+          body: JSON.stringify(payload),
+        },
+      );
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Update failed");
+      }
+
+      // Update local state optimistically
+      const updatedImages = [...inspection.images];
+      const imgIdx = updatedImages.findIndex(
+        (img) => img._id === currentImg._id,
+      );
+
+      if (imgIdx !== -1) {
+        updatedImages[imgIdx].damages = updatedImages[imgIdx].damages.map(
+          (d) => (d._id === damageId ? { ...d, ...payload } : d),
+        );
+        setInspection({ ...inspection, images: updatedImages });
+      }
+
+      Alert.alert("Success", "Damage updated!");
+      setDamageModalVisible(false);
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", err.message || "Failed to update damage");
+    } finally {
+      setUpdatingDamage(false);
+    }
+  };
   return (
     <ScrollView
       style={tw`flex-1 bg-gray-900`}
@@ -371,7 +471,7 @@ export default function InspectionDetails({ route }) {
                   source={{ uri: currentImg.analysedImageUrl }}
                   style={tw`w-full h-56 rounded-2xl bg-gray-700 mb-4`}
                 />
-                {/* Damages */}
+                {/* Damages section */}
                 {currentImg.damages?.length > 0 ? (
                   <View>
                     <Text style={tw`text-white font-semibold mb-2`}>
@@ -379,22 +479,41 @@ export default function InspectionDetails({ route }) {
                     </Text>
 
                     {currentImg.damages.map((d, i) => (
-                      <View key={i} style={tw`bg-gray-700 p-3 rounded-xl mb-2`}>
-                        <Text style={tw`text-red-400 font-semibold`}>
+                      <View
+                        key={d._id}
+                        style={tw`bg-gray-700 p-4 rounded-xl mb-3 relative`}
+                      >
+                        {/* Edit icon – top right corner */}
+                        <TouchableOpacity
+                          style={tw`absolute top-2 right-2 p-3 bg-gray-800 rounded-full z-10`} // ← bigger touch area + z-index
+                          onPress={() => {
+                            console.log(
+                              "Edit icon clicked for damage:",
+                              d._id,
+                              d.type,
+                            ); // ← debug 1
+                            openUpdateDamageModal(d);
+                          }}
+                        >
+                          <Pencil size={14} color="#60A5FA" />
+                        </TouchableOpacity>
+
+                        <Text style={tw`text-red-400 font-semibold text-base`}>
                           {d.type.toUpperCase()} ({d.severity})
                         </Text>
-                        <Text style={tw`text-gray-300`}>{d.description}</Text>
-                        <View style={tw`flex-row items-center`}>
+                        <Text style={tw`text-gray-300 mt-1`}>
+                          {d.description}
+                        </Text>
+                        <View style={tw`flex-row items-center mt-2`}>
                           <DollarSign size={16} color="#9CA3AF" />
                           <Text style={tw`text-gray-300 ml-2`}>
-                            ${d.repair_cost_estimate?.min} - $
-                            {d.repair_cost_estimate?.max}{" "}
-                            {d.repair_cost_estimate?.currency}
+                            ${d.repair_cost_estimate?.min || "?"} - $
+                            {d.repair_cost_estimate?.max || "?"}{" "}
+                            {d.repair_cost_estimate?.currency || "USD"}
                           </Text>
                         </View>
                       </View>
                     ))}
-
                     <TouchableOpacity
                       style={tw`mt-4 bg-red-600 py-3 rounded-full items-center flex-row justify-center`}
                       onPress={deleteInspection}
@@ -466,6 +585,129 @@ export default function InspectionDetails({ route }) {
           </View>
         </ScrollView>
       )}
+
+      <Modal
+        isVisible={isDamageModalVisible}
+        onBackdropPress={() => setDamageModalVisible(false)}
+        avoidKeyboard={true}
+        backdropOpacity={0.5}
+        animationIn="fadeIn"
+        animationOut="fadeOut"
+        style={{ justifyContent: "center", margin: 0 }}
+      >
+        <View style={tw`mx-6 mb-18`}>
+          <ScrollView
+            style={tw`bg-gray-800 rounded-2xl`}
+            contentContainerStyle={tw`p-6`}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <Text style={tw`text-white text-xl font-bold mb-4 text-center`}>
+              Update Damage
+            </Text>
+
+            {/* Type */}
+            <Text style={tw`text-gray-300 mb-1`}>Type</Text>
+            <TextInput
+              style={tw`bg-gray-700 text-white p-3 rounded mb-3`}
+              value={formData.type}
+              onChangeText={(text) => setFormData({ ...formData, type: text })}
+              placeholder="dent, scratch, crack..."
+              placeholderTextColor="#9CA3AF"
+            />
+
+            {/* Severity */}
+            <Text style={tw`text-gray-300 mb-1`}>Severity</Text>
+            <Picker
+              selectedValue={formData.severity}
+              onValueChange={(value) =>
+                setFormData({ ...formData, severity: value })
+              }
+              style={tw`bg-gray-700 text-white mb-3 rounded`}
+              dropdownIconColor="#fff"
+            >
+              <Picker.Item label="Minor" value="minor" />
+              <Picker.Item label="Moderate" value="moderate" />
+              <Picker.Item label="Severe" value="severe" />
+            </Picker>
+
+            {/* Description */}
+            <Text style={tw`text-gray-300 mb-1`}>Description</Text>
+            <TextInput
+              style={tw`bg-gray-700 text-white p-3 rounded mb-3 h-24`}
+              value={formData.description}
+              onChangeText={(text) =>
+                setFormData({ ...formData, description: text })
+              }
+              multiline
+              placeholder="Enter damage description..."
+              placeholderTextColor="#9CA3AF"
+            />
+
+            {/* Confidence */}
+            <Text style={tw`text-gray-300 mb-1`}>Confidence (0-1)</Text>
+            <TextInput
+              style={tw`bg-gray-700 text-white p-3 rounded mb-3`}
+              value={formData.confidence}
+              onChangeText={(text) =>
+                setFormData({ ...formData, confidence: text })
+              }
+              keyboardType="numeric"
+              placeholder="0.9"
+              placeholderTextColor="#9CA3AF"
+            />
+
+            {/* Cost Range */}
+            <Text style={tw`text-gray-300 mb-1`}>
+              Repair Cost Estimate (USD)
+            </Text>
+            <View style={tw`flex-row justify-between mb-4`}>
+              <TextInput
+                style={tw`bg-gray-700 text-white p-3 rounded flex-1 mr-2`}
+                value={formData.minCost}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, minCost: text })
+                }
+                keyboardType="numeric"
+                placeholder="Min"
+                placeholderTextColor="#9CA3AF"
+              />
+              <TextInput
+                style={tw`bg-gray-700 text-white p-3 rounded flex-1`}
+                value={formData.maxCost}
+                onChangeText={(text) =>
+                  setFormData({ ...formData, maxCost: text })
+                }
+                keyboardType="numeric"
+                placeholder="Max"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
+
+            {/* Buttons */}
+            <View style={tw`flex-row justify-between mt-4 mb-14`}>
+              <TouchableOpacity
+                style={tw`bg-gray-600 flex-1 py-3 rounded-lg mr-2 items-center`}
+                onPress={() => setDamageModalVisible(false)}
+              >
+                <Text style={tw`text-white font-medium`}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={tw`bg-green-600 flex-1 py-3 rounded-lg items-center`}
+                onPress={handleUpdateDamage}
+                disabled={updatingDamage}
+              >
+                {updatingDamage ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={tw`text-white font-medium`}>Update</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
 
       <View style={tw`h-20`} />
     </ScrollView>
