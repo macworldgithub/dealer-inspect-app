@@ -302,7 +302,17 @@ export default function InspectionDetails({ route, navigation }) {
 
               Alert.alert("Success", "Inspection deleted successfully");
 
-              route?.params?.navigation?.goBack?.();
+              navigation.reset({
+                index: 0,
+                routes: [
+                  {
+                    name: "BottomTabNavigator",
+                    state: {
+                      routes: [{ name: "ChooseWorkFlow" }],
+                    },
+                  },
+                ],
+              });
             } catch (err) {
               console.error(err);
               Alert.alert("Delete failed", err.message);
