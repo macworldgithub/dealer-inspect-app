@@ -35,7 +35,7 @@ export default function SignIn() {
       });
 
       const data = await response.json();
-      console.log(data, "DATA")
+      console.log(data, "DATA");
       if (!response.ok) {
         throw new Error(data.message || "Login failed");
       }

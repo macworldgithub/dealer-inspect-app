@@ -16,11 +16,10 @@ const Splash = () => {
 
   return (
     <View style={tw`flex-1 bg-white items-center justify-center px-10`}>
-  
       {/* Bottom Logo */}
       <View style={tw`absolute bottom-32 items-center`}>
         <Image
-          source={require("../../../assets/Logo.png")}
+          source={require("../../../assets/logo.jpg")}
           style={tw`w-44 h-16`}
           resizeMode="contain"
         />

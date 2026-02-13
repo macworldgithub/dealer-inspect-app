@@ -65,7 +65,7 @@ export default function InspectionScreen({ route, navigation }) {
       const manipulated = await ImageManipulator.manipulateAsync(
         result.assets[0].uri,
         [{ resize: { width: 1400 } }],
-        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG }
+        { compress: 0.8, format: ImageManipulator.SaveFormat.JPEG },
       );
 
       uploadOriginalImage(manipulated.uri);
@@ -132,8 +132,8 @@ export default function InspectionScreen({ route, navigation }) {
     try {
       setImages((prev) =>
         prev.map((img, i) =>
-          i === currentStep ? { ...img, analysing: true } : img
-        )
+          i === currentStep ? { ...img, analysing: true } : img,
+        ),
       );
 
       const image = images[currentStep];
@@ -144,7 +144,7 @@ export default function InspectionScreen({ route, navigation }) {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ image_url: image.signedUrl }),
-        }
+        },
       );
 
       if (!res.ok) throw new Error("Analyze failed");
@@ -162,15 +162,15 @@ export default function InspectionScreen({ route, navigation }) {
                 analysedUrl,
                 damages: data.damages,
               }
-            : img
-        )
+            : img,
+        ),
       );
     } catch {
       Alert.alert("Analysis failed");
       setImages((prev) =>
         prev.map((img, i) =>
-          i === currentStep ? { ...img, analysing: false } : img
-        )
+          i === currentStep ? { ...img, analysing: false } : img,
+        ),
       );
     }
   };
@@ -278,7 +278,7 @@ export default function InspectionScreen({ route, navigation }) {
   };
 
   return (
- <ScrollView
+    <ScrollView
       style={tw`flex-1 bg-gray-900 pt-12 px-2`}
       contentContainerStyle={tw`pb-10`}
     >
@@ -293,10 +293,10 @@ export default function InspectionScreen({ route, navigation }) {
           {INSPECTION_STEPS[currentStep]}
         </Text>
       </View>
-       <Text style={tw`text-gray-400 px-8 mb-4`}>
-          Inspection Image {currentStep + 1} • Step {currentStep + 1} of{" "}
-          {TOTAL_STEPS}
-        </Text>
+      <Text style={tw`text-gray-400 px-8 mb-4`}>
+        Inspection Image {currentStep + 1} • Step {currentStep + 1} of{" "}
+        {TOTAL_STEPS}
+      </Text>
 
       {/* Upload */}
       {!img &&

@@ -21,6 +21,7 @@ import {
   Edit3,
 } from "lucide-react-native";
 import { ArrowLeft } from "lucide-react-native";
+import AppLogo from "../../../assets/logo.jpg";
 
 export default function VehicleDetails({ route, navigation }) {
   const { vehicleId } = route.params;
@@ -28,18 +29,53 @@ export default function VehicleDetails({ route, navigation }) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
+  // useEffect(() => {
+  //   const fetchVehicle = async () => {
+  //     try {
+  //       const token = await getAccessToken();
+  //       console.log("Vehicle ID:", vehicleId);
+  //       const res = await fetch(
+  //         `${API_BASE_URL}/vehicle/${vehicleId}`,
+  //         {
+  //           headers: { Authorization: `Bearer ${token}` },
+  //         },
+  //       );
+
+  //       if (!res.ok) throw new Error(`API error ${res.status}`);
+
+  //       const data = await res.json();
+  //       setVehicle(data);
+  //     } catch (err) {
+  //       console.error("Failed to fetch vehicle:", err.message);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchVehicle();
+  // }, [vehicleId]);
+
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
         const token = await getAccessToken();
-        const res = await fetch(`${API_BASE_URL}/vehicle/${vehicleId}`, {
+
+        const res = await fetch(`${API_BASE_URL}/vehicle?page=1&limit=50`, {
           headers: { Authorization: `Bearer ${token}` },
         });
 
         if (!res.ok) throw new Error(`API error ${res.status}`);
 
         const data = await res.json();
-        setVehicle(data);
+
+      
+        const foundVehicle = data.items.find((item) => item._id === vehicleId);
+
+        if (!foundVehicle) {
+          throw new Error("Vehicle not found");
+        }
+
+        setVehicle(foundVehicle);
       } catch (err) {
         console.error("Failed to fetch vehicle:", err.message);
       } finally {
@@ -101,23 +137,29 @@ export default function VehicleDetails({ route, navigation }) {
         <Text style={tw`text-white text-lg`}>Vehicle not found</Text>
       </View>
     );
-
   return (
     <ScrollView
       style={tw`flex-1 bg-gray-900 pt-8 px-6`}
       contentContainerStyle={tw`pb-6`}
     >
-      <View style={tw`flex-row items-center mb-6`}>
+      <View style={tw`flex-row items-center justify-between mb-6`}>
+        {/* Back Button */}
         <TouchableOpacity
           onPress={() => navigation.goBack()}
-          style={tw`mr-4 p-2 rounded-full bg-gray-900 border border-gray-800`}
+          style={tw`p-2 rounded-full bg-gray-900 border border-gray-800`}
         >
           <ArrowLeft size={22} color="#fff" />
         </TouchableOpacity>
 
-        <Text style={tw`text-xl font-bold text-white`}>Vehicles Detail</Text>
-      </View>
+        {/* Logo */}
+        <Image source={AppLogo} style={tw`w-24 h-10`} resizeMode="contain" />
 
+        {/* Empty View for spacing symmetry */}
+        <View style={tw`w-8`} />
+      </View>
+      <Text style={tw`text-xl font-bold text-white ml-24 mb-4`}>
+        Vehicle Details
+      </Text>
       {/* Vehicle Image */}
       <Image
         source={
